@@ -1,0 +1,215 @@
+The objective of RevSim is to provide a more realistic model of how
+the sales process in a B2B company with monthly recurring revenues will
+evolve, as compared to overly-simplified spreadsheets of projections.
+
+This is done by simulating the sales process and consequent revenue,
+with random events modeling real-world scenarios.  We can run the model
+repeatedly to get a sense of the range of possibilities for a given set
+of assumptions.  This is basically monte-carlo simulation.
+
+The following processes can be modeled:
+
+* Sales staff typically work weekdays (and not weekends) and take time off
+  for personal vacations, sick days and statutory holidays.  Working
+  days vs. calendar days are modeled to support this.  Vacation days are
+  randomly allocated to staff based on their sales 'class' -- which captures
+  how many vacation days they are entitled to.
+
+  See parameters:
+  VACATION
+  VACATION_NAME
+  VACATION_DAYS
+
+* The sales process is typically multi-stage.  For example, a cold call
+  may be followed by a product demo and a contract negotiation.  Each of
+  these stages takes time, may have to be rescheduled (taking more time),
+  and has a certain probability of success or customer attrition.
+
+  See parameters:
+  STAGE
+  STAGE_NAME
+  STAGE_FOLLOWS
+  STAGE_DAYS_AVERAGE
+  STAGE_DAYS_STANDARD_DEVIATION
+  STAGE_REBOOK_PERCENT
+  STAGE_ATTRITION_PERCENT
+
+* A single organization may sell multiple products and services.  Each
+  one may attract different amounts of monthly recurring revenue, which
+  may vary from customer to customer.
+
+  See parameters:
+  PRODUCT
+  PRODUCT_NAME
+  PRODUCT_M_REVENUE_AVG
+  PRODUCT_M_REVENUE_SDEV
+
+* Customers who subscribe to a given product often start small and ramp
+  up utilization of a product (and therefore revenue) over time.  This
+  should be reflected in the simulated monthly revenue.
+
+  See parameters:
+
+  PRODUCT_M_GROWTH_RATE_PERCENT
+  PRODUCT_MONTHS_TIL_STEADY_STATE_AVG
+  PRODUCT_MONTHS_TIL_STEADY_STATE_SDEV
+
+* Customers drop off - they lose interest, their needs evolve, they
+  even go out of business.  The probability that a given customer of a
+  given product terminates the agreement at any given time is modeled:
+
+  PRODUCT_ATTRITION_PERCENT_PER_MONTH
+
+* Different products may be sold via different sales processes, so we
+  have to link the two concepts (products and the first stage of selling
+  that product) together with:
+
+  PRODUCT_FIRST_SALE_STAGE
+
+* Sales reps don't just magically start out productive.  Their productivity,
+  modeled as daily call volume, grows over time.  How long it takes a rep
+  to go from "zero" to "100%" productivity is an integral part of the model.
+
+  See parameters:
+  REP_CLASS
+  REP_CLASS_NAME
+  REP_CLASS_PRODUCTIVITY
+
+* How much commission a rep is payed on a sale, and for how many months,
+  may vary.  This is also a part of the idea of a class of sales rep:
+
+  REP_CLASS_COMMISSION
+  REP_CLASS_COMMISSION_MONTHS
+
+* How much vacation a rep is entitled to is also modeled.  We link sales
+  reps to classes of vacation allocation.
+
+  REP_CLASS_VACATION
+
+* Unfortunately, reps leave.  Nobody works in the same organization forever.
+  We can't usually predict when a given rep will leave, but we can model
+  averages for what to expect:
+
+  REP_CLASS_AVG_MONTHS_EMPLOYMENT
+  REP_CLASS_SDEV_MONTHS_EMPLOYMENT
+
+* When sales reps leave, they are typically replaced.  This can be
+  simulated with some automation too:
+
+  Global parameters:
+
+  DAYS_TO_REPLACE_REP_AVG=30
+  DAYS_TO_REPLACE_REP_SDEV=7
+
+  A parameter for each class of sales rep:
+
+  REP_CLASS_AUTO_REPLACE
+
+* To retain staff, organizations have to offer pay increases, in particular to
+  the base salary that reps draw:
+
+  REP_CLASS_ANNUAL_INCREASE_PERCENT
+
+* An integral part of the model is how many reps we will hire, when, in
+  what class and paid what salary:
+
+  SALES_REP
+  SALES_REP_NAME
+  SALES_REP_CLASS
+  SALES_REP_START
+  SALES_REP_ANNUAL_SALARY
+
+* Note that if we know that a rep will end their contract or employment
+  on a specific date, we can specify that.  Otherwise, we can ask that the
+  rep either finish at the end of the simulation (finish) or on a random
+  date based on parameters in the rep class:
+
+  SALES_REP_FINISH
+
+* Not all sales reps initiate calls to new target organizations.  Those
+  that do (cold callers) should be flagged as such in the relevant
+  rep class:
+
+  REP_CLASS_INITIATE_CALLS
+
+* How many calls ("dials") per day a rep can handle, which is applicable
+  both to those that cold call and those that chase after variously
+  qualified leads to close, will vary by rep:
+
+  SALES_REP_DAILY_CALLS
+
+  The productivity variable in the rep class will determine how close
+  they get to this ideal target in each month after joining the
+  organization.
+
+* Cold callers are not likely to collect a commission, but they may
+  be paid a flat fee for each opportunity that they hand off to a
+  more senior account manager:
+
+  SALES_REP_HANDOFF_FEE
+
+* When revenue does happen, it may be automatically debited from the
+  customer's credit card, in which case a processing fee is paid, or it
+  may be invoiced and then we wait for the customer to send funds
+  over, using an old-school cheque or via an electronic funds transfer.
+  In other words, the model should either show immediate revenue but with
+  a processing fee deducted, or delayed revenue.
+
+  See parameters:
+
+  PAYMENT_PROCESSING_PERCENT
+  COLLECTIONS_DELAY_CALENDAR_DAYS_AVERAGE
+  COLLECTIONS_DELAY_CALENDAR_DAYS_SDEV
+
+* In B2B businesses in particular, there may be a finite set of prospective
+  customers.  Once we've called a customer and pitched to them, they may
+  indicate non-interest and ask not to be called again.  After a while,
+  we will have called every prospective customer, and either sold to them
+  or been told to back off.  This is a process of market saturation and
+  must be incorporated in the model:
+
+  MARKET_SIZE
+  ORG_COOLING_PERIOD_DAYS
+
+* Organizations have other staff and overhead costs, not just sales
+  people.  We can leverage the sales rep model to represent people who
+  do draw a salary but who don't directly work in sales - so they
+  don't contribute directly to revenue and are not paid a commission,
+  by specifying:
+
+  SALES_REP_SALARY_ONLY=true
+
+* Not every rep is qualified to do the work in each stage of the sales
+  process.  We can specify who does cold calling, who runs demos, who
+  closes deals, etc. by linking sales stages to classes of reps:
+
+  LINK_STAGE_CLASS
+
+* We should specify statutory holidays, where nobody is expected to
+  work:
+
+  With the same dates every year:
+
+  HOLIDAY=xmas
+  HOLIDAY_NAME=Christmas/new years
+  HOLIDAY_START=12-24
+  HOLIDAY_FINISH=12-31
+
+  Or with different dates each year:
+
+  HOLIDAY=famday-2022
+  HOLIDAY_NAME=Family day
+  HOLIDAY_START=2022-02-21
+  HOLIDAY_FINISH=2022-02-21
+
+  HOLIDAY=famday-2023
+  HOLIDAY_NAME=Family day
+  HOLIDAY_START=2023-02-20
+  HOLIDAY_FINISH=2023-02-20
+
+* Finally and most simply, we should tell the simulator when to
+  start and how long to run:
+
+  FIRST_DAY=2022-07-01
+  DURATION=1095
+
