@@ -1,0 +1,18 @@
+To build this you also need a copy of IdanLib
+
+  https://github.com/00shoham/idanlib/
+
+Check out that first, and in the src/ folder run Make.
+
+IdanLib also has dependencies:
+  - lua
+  - libcurl
+  - uuid
+
+On Ubuntu and similar Linux distributions, you run:
+
+  sudo apt install liblua5.3-dev uuid-dev libcurl4-gnutls-dev
+
+You can then build both IdanLib and RevSim.  You may have to 
+modify the Makefile in RevSim/src to point to the correct src/
+folder of your check-out of IdanLib.
