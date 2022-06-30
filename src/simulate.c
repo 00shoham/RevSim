@@ -126,6 +126,8 @@ int main( int argc, char** argv )
         }
       }
     ++day;
+
+    ++dayNo;
     }
 
   printf( "Simulated %d days\n", dayNo );
