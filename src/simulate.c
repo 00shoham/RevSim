@@ -108,6 +108,17 @@ int main( int argc, char** argv )
        && tSim <= conf->simulationEnd;
        tSim += DAY_IN_SECONDS )
     {
+    if( dayNo < conf->simulationDurationDays )
+      {
+      if( day->date.day==1 )
+        {
+        if( day->month!=NULL )
+          {
+          day->month->nAvailableOrgs = CountAvailableOrgs( conf, tSim );
+          }
+        }
+      }
+
     if( day->working==0 ) /* nobody working this day */
       {
       Event( "Nobody working on %04d-%02d-%02d", day->date.year, day->date.month, day->date.day );
@@ -117,14 +128,6 @@ int main( int argc, char** argv )
 
     SimulateCalls( conf, dayNo, tSim );
 
-    if( dayNo < conf->simulationDurationDays )
-      {
-      if( day->date.day==1 )
-        {
-        if( day->month!=NULL )
-          day->month->nAvailableOrgs = CountAvailableOrgs( conf, tSim );
-        }
-      }
     ++day;
 
     ++dayNo;
