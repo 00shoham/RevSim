@@ -21,6 +21,7 @@ typedef struct _salesRep _SALES_REP;
 #define DEFAULT_DAYS_TO_AUTO_REPLACE_SALES_REP 14
 #define DEFAULT_DAYS_TO_AUTO_REPLACE_SALES_REP_SDEV 3
 
+#include "cash-event.h"
 #include "org.h"
 #include "holiday.h"
 #include "vacation.h"

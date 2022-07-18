@@ -62,6 +62,11 @@ typedef struct _config
 
   /* if the market size is unbounded, just use this: */
   int customerNumber;
+
+  /* cashflow modeling */
+  double taxRate;
+  double initialCashBalance;
+  _CASH_EVENT* cashEvents;
   } _CONFIG;
 
 void SetDefaults( _CONFIG* config );

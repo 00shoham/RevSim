@@ -19,6 +19,7 @@ CFLAGS=-Wall -O2 $(INCLUDES)
 
 SHAREDOBJ=\
   availability.o\
+  cash-event.o\
   config.o\
   events.o\
   holiday.o\

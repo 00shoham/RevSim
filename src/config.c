@@ -71,6 +71,9 @@ void FreeConfig( _CONFIG* config )
   if( config->orgs != NULL )
     free( config->orgs );
 
+  if( config->cashEvents != NULL )
+    FreeCashEventList( config->cashEvents );
+
   free( config );
   }
 
@@ -777,6 +780,56 @@ int ProcessKeywordPair( _CONFIG* config, char* variable, char* value )
     return 0;
     }
 
+  /* super simple model for now */
+  if( strcasecmp( variable, "TAX_RATE" )==0 )
+    {
+    double r = atof( value );
+    if( r<=0 || r>=50 )
+      Error( "A tax rate of [%s] is not believable (0-50 is real?)", value );
+    config->taxRate = r;
+    return 0;
+    }
+
+  if( strcasecmp( variable, "INITIAL_CASH_BALANCE" )==0 )
+    {
+    double b = atof( value );
+    if( b<0 || b>100000000 )
+      Error( "The initial cash balance of %s is not credible", value );
+    config->initialCashBalance = b;
+    return 0;
+    }
+
+  enum eventType eventType = et_invalid;
+
+  if( strcasecmp( variable, "INVESTMENT" )==0 )
+    eventType = et_investment;
+  else if( strcasecmp( variable, "GRANT" )==0 )
+    eventType = et_grant;
+  else if( strcasecmp( variable, "TAX_PAYMENT" )==0 )
+    eventType = et_tax_payment;
+  else if( strcasecmp( variable, "OTHER_PAYMENT" )==0 )
+    eventType = et_other_payment;
+
+  if( eventType != et_invalid )
+    {
+    char* ptr = NULL;
+    char* valueStr = strtok_r( value, "@\r\n", &ptr );
+    char* dateStr = strtok_r( NULL, "@\r\n", &ptr );
+    if( EMPTY( dateStr ) || EMPTY( valueStr ) )
+      Error( "%s should have a value number@date (date==CCYY-MM-DD)", variable );
+    double v = atof( valueStr );
+    if( v<0 || v>10000000 )
+      Error( "Value of %.1lf not plausible", v );
+    _MMDD when = { 0 };
+    if( IsValidMMDD( dateStr, &when )!=0 )
+      Error( "Date of %s does not parse - should be CCYY-MM-DD", dateStr );
+    config->cashEvents = NewCashEvent( eventType,
+                                       when,
+                                       v,
+                                       config->cashEvents );
+    return 0;
+    }
+
   Warning( "Unrecognized keyword in config: [%s]", variable );
 
   return -1;
@@ -923,6 +976,19 @@ void PrintConfig( FILE* f, _CONFIG* config )
     for( _CLASS_POINTER* cp=stage->repClasses; cp!=NULL; cp=cp->next )
       fprintf( f, "LINK_STAGE_CLASS %s %s", NULLPROTECT( stage->id ), NULLPROTECT( cp->class->id ) );
   fprintf( f, "\n" );
+
+  fprintf( f, "# cashflow modeling related parameters (if any):\n" );
+  if( config->taxRate>0 )
+    {
+    fprintf( f, "TAX_RATE=%.1lf\n", config->taxRate );
+    fprintf( f, "\n" );
+    }
+
+  if( config->initialCashBalance>0 )
+    {
+    fprintf( f, "INITIAL_CASH_BALANCE=%.1lf\n", config->initialCashBalance );
+    fprintf( f, "\n" );
+    }
   }
 
 
