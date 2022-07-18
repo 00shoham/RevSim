@@ -10,6 +10,7 @@ int main( int argc, char** argv )
   char* outFile = NULL;
   char* eventsFile = NULL;
   char* counterFile = NULL;
+  char* cashFile = NULL;
 
   RandomSeed();
 
@@ -25,9 +26,11 @@ int main( int argc, char** argv )
       eventsFile = argv[++i];
     else if( strcmp( argv[i], "-k" )==0 && i+1<argc )
       counterFile = argv[++i];
+    else if( strcmp( argv[i], "-s" )==0 && i+1<argc )
+      cashFile = argv[++i];
     else if( strcmp( argv[i], "-h" )==0 )
       {
-      printf("USAGE: %s [-c configFile] [-d configDir] [-o outFile] [-e eventsFile]\n", argv[0] );
+      printf("USAGE: %s [-c configFile] [-d configDir] [-o outFile] [-e eventsFile] [-s cashFile]\n", argv[0] );
       exit(0);
       }
     else
@@ -79,6 +82,8 @@ int main( int argc, char** argv )
   err = EstablishWorkDays( conf->customerCare, conf );
   if( err!=0 )
     Warning( "Failed to establish work days for %s", conf->customerCare->id );
+
+  RecordCashEvents( conf );
 
   Event( "Simulation starts on %04d-%02d-%02d",
          conf->simulationFirstDay.year,
@@ -163,6 +168,18 @@ int main( int argc, char** argv )
       }
     else
       Warning( "Failed to open %s for writing", counterFile );
+    }
+
+  if( NOTEMPTY( cashFile ) )
+    {
+    FILE* f = fopen( cashFile, "w" );
+    if( f!=NULL )
+      {
+      /* QQQ PrintDailyCash( f, conf ); */
+      fclose( f );
+      }
+    else
+      Warning( "Failed to open %s for writing", cashFile );
     }
 
   FreeConfig( conf );

@@ -37,6 +37,7 @@ typedef struct _singleDay
   _REVENUE_EVENT* dailySales;
   _PAY_EVENT* fees;
   _MONTHLY_SUMMARY* month;
+  double cashOnHand;
   } _SINGLE_DAY;
 
 #endif

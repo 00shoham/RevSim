@@ -74,6 +74,9 @@ void FreeConfig( _CONFIG* config )
   if( config->cashEvents != NULL )
     FreeCashEventList( config->cashEvents );
 
+  if( config->cashEventArray != NULL )
+    free( config->cashEvents );
+
   free( config );
   }
 

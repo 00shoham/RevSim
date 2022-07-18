@@ -67,6 +67,8 @@ typedef struct _config
   double taxRate;
   double initialCashBalance;
   _CASH_EVENT* cashEvents;
+  int nCashEvents;
+  _CASH_EVENT* cashEventArray;
   } _CONFIG;
 
 void SetDefaults( _CONFIG* config );

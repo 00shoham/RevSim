@@ -1,6 +1,8 @@
 #ifndef _CASH_EVENT_INCLUDE
 #define _CASH_EVENT_INCLUDE
 
+typedef struct _config _CONFIG;
+
 /* more later.  e.g., repayable loans */
 enum eventType { et_invalid,
                  et_investment,
@@ -21,5 +23,7 @@ _CASH_EVENT* NewCashEvent( enum eventType type,
                            double value,
                            struct _cashEvent* list );
 void FreeCashEventList( _CASH_EVENT* list );
+void RecordCashEvents( _CONFIG* conf );
+void PrintCashEvent( _CASH_EVENT* ce, FILE* f );
 
 #endif
