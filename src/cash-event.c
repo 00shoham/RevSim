@@ -68,7 +68,7 @@ void PrintCashEvent( _CASH_EVENT* ce, FILE* f )
   if( ce==NULL || f==NULL )
     return;
 
-  fprintf( f, "%s=%.1lf@%04d-%02d-%02d\n",
+  fprintf( f, "%s=%.1lf @ %04d-%02d-%02d\n",
            CashEventTypeName( ce->type ),
            ce->value,
            ce->when.year,
@@ -76,8 +76,29 @@ void PrintCashEvent( _CASH_EVENT* ce, FILE* f )
            ce->when.day );
   }
 
+void PrintAllCashEvents( _CONFIG* conf, FILE* f )
+  {
+  if( conf==NULL || f==NULL || conf->cashEventArray==NULL )
+    return;
+
+  _CASH_EVENT* ptr = conf->cashEventArray;
+
+  ptr = conf->cashEventArray;
+  for( int i=0; i<conf->nCashEvents; ++i )
+    {
+    PrintCashEvent( ptr, f );
+    ++ptr;
+    }
+  }
+
 void BuildCashEventArray( _CONFIG* conf )
   { 
+  if( conf==NULL )
+    return;
+
+  if( conf->cashEventArray!=NULL )
+    FREE( conf->cashEventArray );
+
   int nCashEvents = CountCashEvents( conf->cashEvents );
   if( nCashEvents<=0 )
     return;
@@ -92,14 +113,6 @@ void BuildCashEventArray( _CONFIG* conf )
     }
 
   qsort( conf->cashEventArray, nCashEvents, sizeof( _CASH_EVENT ), CompareCashEvents );
-
-  /* QQQ once we confirm it's alright, move to printconfig */
-  ptr = conf->cashEventArray;
-  for( int i=0; i<conf->nCashEvents; ++i )
-    {
-    PrintCashEvent( ptr, stdout );
-    ++ptr;
-    }
   }
 
 void RecordCashEvents( _CONFIG* conf )
@@ -109,6 +122,8 @@ void RecordCashEvents( _CONFIG* conf )
     Warning( "RecordCashEvents - no conf" );
     return;
     }
+
+  BuildCashEventArray( conf );
 
   if( conf->baselineWorkDays==NULL )
     {
@@ -122,6 +137,5 @@ void RecordCashEvents( _CONFIG* conf )
     firstDay->cashOnHand = conf->initialCashBalance;
     }
 
-  BuildCashEventArray( conf );
   /* QQQ */
   }

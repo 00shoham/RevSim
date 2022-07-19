@@ -41,6 +41,7 @@ int main( int argc, char** argv )
   SetDefaults( conf );
   ReadConfig( conf, confPath );
   ValidateConfig( conf );
+  RecordCashEvents( conf );
 
   free( confPath );
   confPath = NULL;

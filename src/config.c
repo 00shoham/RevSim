@@ -997,7 +997,7 @@ void PrintConfig( FILE* f, _CONFIG* config )
   fprintf( f, "# Which rep classes can work on which sales stages?\n" );
   for( _SALES_STAGE* stage = config->stages; stage!=NULL; stage=stage->next )
     for( _CLASS_POINTER* cp=stage->repClasses; cp!=NULL; cp=cp->next )
-      fprintf( f, "LINK_STAGE_CLASS %s %s", NULLPROTECT( stage->id ), NULLPROTECT( cp->class->id ) );
+      fprintf( f, "LINK_STAGE_CLASS %s %s\n", NULLPROTECT( stage->id ), NULLPROTECT( cp->class->id ) );
   fprintf( f, "\n" );
 
   fprintf( f, "# cashflow modeling related parameters (if any):\n" );
@@ -1012,6 +1012,9 @@ void PrintConfig( FILE* f, _CONFIG* config )
     fprintf( f, "INITIAL_CASH_BALANCE=%.1lf\n", config->initialCashBalance );
     fprintf( f, "\n" );
     }
+
+  /* all configured cash events */
+  PrintAllCashEvents( config, f );
   }
 
 

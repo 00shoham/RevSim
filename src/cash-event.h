@@ -25,5 +25,6 @@ _CASH_EVENT* NewCashEvent( enum eventType type,
 void FreeCashEventList( _CASH_EVENT* list );
 void RecordCashEvents( _CONFIG* conf );
 void PrintCashEvent( _CASH_EVENT* ce, FILE* f );
+void PrintAllCashEvents( _CONFIG* conf, FILE* f );
 
 #endif
