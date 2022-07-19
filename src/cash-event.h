@@ -7,8 +7,8 @@ typedef struct _config _CONFIG;
 enum eventType { et_invalid,
                  et_investment,
                  et_grant,
-                 et_tax_payment,
-                 et_other_payment };
+                 et_tax_refund,
+                 et_one_time_income };
 
 typedef struct _cashEvent
   {

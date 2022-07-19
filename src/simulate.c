@@ -183,6 +183,7 @@ int main( int argc, char** argv )
     }
 
   FreeConfig( conf );
+  conf = NULL;
 
   if( out!=stdout && out!=NULL )
     fclose( out );

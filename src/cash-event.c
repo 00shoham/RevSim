@@ -44,24 +44,22 @@ int CountCashEvents( _CASH_EVENT* list )
 
 int CompareCashEvents( const void* a, const void* b )
   {
-  _CASH_EVENT** eventAPtr = (_CASH_EVENT**)a;
-  _CASH_EVENT** eventBPtr = (_CASH_EVENT**)b;
-  _CASH_EVENT* eventA = *eventAPtr;
-  _CASH_EVENT* eventB = *eventBPtr;
+  _CASH_EVENT* eventA = (_CASH_EVENT*)a;
+  _CASH_EVENT* eventB = (_CASH_EVENT*)b;
 
-  return NumberOfDays( &(eventA->when), &(eventB->when) );
+  return -1 * NumberOfDays( &(eventA->when), &(eventB->when) );
   }
 
 char* CashEventTypeName( enum eventType et )
   {
   switch( et )
     {
-    case et_invalid:       return "INVALID-CASH-EVENT-TYPE";
-    case et_investment:    return "INVESTMENT";
-    case et_grant:         return "GRANT";
-    case et_tax_payment:   return "TAX_PAYMENT";
-    case et_other_payment: return "OTHER_PAYMENT";
-    default:               return "INVALID-CE-TYPE";
+    case et_invalid:         return "INVALID_CASH_EVENT_TYPE";
+    case et_investment:      return "INVESTMENT";
+    case et_grant:           return "GRANT";
+    case et_tax_refund:      return "TAX_REFUND";
+    case et_one_time_income: return "ONE_TIME_INCOME";
+    default:                 return "INVALID_CE_TYPE";
     }
   }
 

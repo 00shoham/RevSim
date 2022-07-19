@@ -37,45 +37,65 @@ void FreeConfig( _CONFIG* config )
     FREE( config->configFolder );
 
   if( config->parserLocation != NULL )
+    {
     FreeTagValue( config->parserLocation );
+    config->parserLocation = NULL;
+    }
 
   if( config->includes != NULL )
+    {
     FreeTagValue( config->includes );
+    config->includes = NULL;
+    }
 
   if( config->list != NULL )
+    {
     FreeTagValue( config->list );
+    config->list = NULL;
+    }
+
 
   if( config->monthlySummary!=NULL )
     FREE( config->monthlySummary );
 
   FreeHoliday( config->holidays );
+  config->holidays = NULL;
 
   FreeVacation( config->vacations );
+  config->vacations = NULL;
 
   if( config->baselineWorkDays != NULL )
-    free( config->baselineWorkDays );
+    FREE( config->baselineWorkDays );
 
   FreeSalesStage( config->stages );
+  config->stages = NULL;
 
   FreeProduct( config->products );
+  config->products = NULL;
 
   FreeSalesRepClass( config->salesRepClasses );
+  config->salesRepClasses = NULL;
 
   FreeSalesRep( config->salesReps );
+  config->salesReps = NULL;
  
   FreeSalesRep( config->customerCare );
+  config->customerCare = NULL;
 
   if( config->monthlySummary != NULL )
-    free( config->monthlySummary );
+    FREE( config->monthlySummary );
  
   if( config->orgs != NULL )
-    free( config->orgs );
+    FREE( config->orgs );
 
   if( config->cashEvents != NULL )
+    {
     FreeCashEventList( config->cashEvents );
+    config->cashEvents = NULL;
+    }
 
   if( config->cashEventArray != NULL )
-    free( config->cashEvents );
+    FREE( config->cashEventArray );
 
   free( config );
   }
@@ -784,7 +804,7 @@ int ProcessKeywordPair( _CONFIG* config, char* variable, char* value )
     }
 
   /* super simple model for now */
-  if( strcasecmp( variable, "TAX_RATE" )==0 )
+  if( strcasecmp( variable, "TAX_RATE_PERCENT" )==0 )
     {
     double r = atof( value );
     if( r<=0 || r>=50 )
@@ -808,16 +828,16 @@ int ProcessKeywordPair( _CONFIG* config, char* variable, char* value )
     eventType = et_investment;
   else if( strcasecmp( variable, "GRANT" )==0 )
     eventType = et_grant;
-  else if( strcasecmp( variable, "TAX_PAYMENT" )==0 )
-    eventType = et_tax_payment;
-  else if( strcasecmp( variable, "OTHER_PAYMENT" )==0 )
-    eventType = et_other_payment;
+  else if( strcasecmp( variable, "TAX_REFUND" )==0 )
+    eventType = et_tax_refund;
+  else if( strcasecmp( variable, "ONE_TIME_INCOME" )==0 )
+    eventType = et_one_time_income;
 
   if( eventType != et_invalid )
     {
     char* ptr = NULL;
-    char* valueStr = strtok_r( value, "@\r\n", &ptr );
-    char* dateStr = strtok_r( NULL, "@\r\n", &ptr );
+    char* valueStr = strtok_r( value, "@ \r\n", &ptr );
+    char* dateStr = strtok_r( NULL, "@ \r\n", &ptr );
     if( EMPTY( dateStr ) || EMPTY( valueStr ) )
       Error( "%s should have a value number@date (date==CCYY-MM-DD)", variable );
     double v = atof( valueStr );
@@ -983,7 +1003,7 @@ void PrintConfig( FILE* f, _CONFIG* config )
   fprintf( f, "# cashflow modeling related parameters (if any):\n" );
   if( config->taxRate>0 )
     {
-    fprintf( f, "TAX_RATE=%.1lf\n", config->taxRate );
+    fprintf( f, "TAX_RATE_PERCENT=%.1lf\n", config->taxRate );
     fprintf( f, "\n" );
     }
 

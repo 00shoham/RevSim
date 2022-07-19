@@ -14,8 +14,8 @@ INCLUDES=-I$(LUADIR) -I$(UTILDIR)
 LIBS=$(UTILSLIB) -lm -lpthread -luuid -llua5.3 -lcurl
 
 CC=gcc
-CFLAGS=-Wall -O2 $(INCLUDES)
-# CFLAGS=-Wall -g -rdynamic -fsanitize=address $(INCLUDES)
+# CFLAGS=-Wall -O2 $(INCLUDES)
+CFLAGS=-Wall -g -rdynamic -fsanitize=address $(INCLUDES)
 
 SHAREDOBJ=\
   availability.o\

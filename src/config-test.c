@@ -56,6 +56,7 @@ int main( int argc, char** argv )
   PrintConfig( out, conf );
 
   FreeConfig( conf );
+  conf = NULL;
 
   return 0;
   }
