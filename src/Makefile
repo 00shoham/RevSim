@@ -2,7 +2,7 @@ BIN=\
   test-rand\
   config-test\
   cumulative-odds\
-  simulate\
+  rev-sim\
 
 all: $(BIN)
 
@@ -42,8 +42,8 @@ ALLOBJ=\
 $(BIN): % : %.o $(ALLOBJ) $(UTILSLIB)
 	$(CC) $(CFLAGS) -o $@ $< $(ALLOBJ) $(LIBS)
 
-install: simulate
-	sudo install -o root -g root -m 755 simulate /usr/local/bin
+install: rev-sim
+	sudo install -o root -g root -m 755 rev-sim /usr/local/bin
 
 clean: NULL
 	rm -f $(SHAREDOBJ) $(BIN)
