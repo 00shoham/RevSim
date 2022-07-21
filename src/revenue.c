@@ -82,7 +82,13 @@ void AddToSummary( enum pay_type type, _MMDD when, _SALES_REP* s, double amount 
     }
   }
 
-_REVENUE_EVENT* NewRevenueEvent( _MMDD when, int customerNumber, _SALES_REP* s, int eventNumber, double revenue, _REVENUE_EVENT* list )
+_REVENUE_EVENT* NewRevenueEvent( _CONFIG* conf,
+                                 _MMDD when,
+                                 int customerNumber,
+                                 _SALES_REP* s,
+                                 int eventNumber,
+                                 double revenue,
+                                 _REVENUE_EVENT* list )
   {
   _REVENUE_EVENT* p = SafeCalloc( 1, sizeof( _REVENUE_EVENT ), "_REVENUE_EVENT" );
   p->customerNumber = customerNumber;
@@ -91,6 +97,8 @@ _REVENUE_EVENT* NewRevenueEvent( _MMDD when, int customerNumber, _SALES_REP* s, 
   p->next = list;
 
   AddToSummary( pt_revenue, when, s, revenue );
+
+  RecordDailyIncome( conf, &when, revenue );
 
   return p;
   }
@@ -107,7 +115,11 @@ void FreeRevenueEvent( _REVENUE_EVENT* r )
   free( r );
   }
 
-_PAY_EVENT* NewPayEvent( _MMDD when, _SALES_REP* s, enum pay_type type, double amount, _PAY_EVENT* list )
+_PAY_EVENT* NewPayEvent( _CONFIG* conf,
+                         _MMDD when,
+                         _SALES_REP* s,
+                         enum pay_type type, double amount,
+                         _PAY_EVENT* list )
   {
   _PAY_EVENT* p = SafeCalloc( 1, sizeof( _PAY_EVENT ), "_PAY_EVENT" );
   p->rep = s;
@@ -116,6 +128,8 @@ _PAY_EVENT* NewPayEvent( _MMDD when, _SALES_REP* s, enum pay_type type, double a
   p->next = list;
 
   AddToSummary( type, when, s, amount );
+
+  RecordDailyExpense( conf, &when, amount );
 
   return p;
   }

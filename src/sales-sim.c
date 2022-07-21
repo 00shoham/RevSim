@@ -247,11 +247,11 @@ void CloseSingleSale( _CONFIG* conf,
                 );
       */
 
-      payDay->dailySales = NewRevenueEvent( payDay->date, customer, repBeingPaid, monthNo, actualRevenue, payDay->dailySales );
+      payDay->dailySales = NewRevenueEvent( conf, payDay->date, customer, repBeingPaid, monthNo, actualRevenue, payDay->dailySales );
 
       if( repBeingPaid == salesRep )
         {
-        payDay->fees = NewPayEvent( payDay->date, salesRep, pt_commission, revenue * salesRep->class->commission / 100.0, payDay->fees );
+        payDay->fees = NewPayEvent( conf, payDay->date, salesRep, pt_commission, revenue * salesRep->class->commission / 100.0, payDay->fees );
         Event( ".. %04d-%02d-%02d Rep %s gets paid %.1lf for %.1lf in sales to customer %d (month %d of deal)",
                payDay->date.year, payDay->date.month, payDay->date.day,
                salesRep->id, payDay->fees->amount, payDay->dailySales->revenue, customer, monthNo );
@@ -341,7 +341,7 @@ void CloseSingleSale( _CONFIG* conf,
           ++ thisDay->month->nCustomers;
         }
 
-      thisDay->dailySales = NewRevenueEvent( thisDay->date, customer, conf->customerCare, monthNo, revenue, thisDay->dailySales );
+      thisDay->dailySales = NewRevenueEvent( conf, thisDay->date, customer, conf->customerCare, monthNo, revenue, thisDay->dailySales );
 
       Event( ".. %04d-%02d-%02d customer care revenue of %.1lf from customer %d (month %d of deal)",
              thisDay->date.year, thisDay->date.month, thisDay->date.day,
@@ -359,10 +359,10 @@ void CloseSingleSale( _CONFIG* conf,
 
 /* return 0 for good call, -1 for no more calls by this rep on this day, please */
 int SimulateInitialCall( _CONFIG* conf,
-                          _SALES_REP* salesRep,
-                          _SINGLE_DAY* repFirstDay, /*QQQ need args? implicit in salesRep */
-                          _SINGLE_DAY* repLastDay,
-                          _PRODUCT* product )
+                         _SALES_REP* salesRep,
+                         _SINGLE_DAY* repFirstDay, /*QQQ need args? implicit in salesRep */
+                         _SINGLE_DAY* repLastDay,
+                         _PRODUCT* product )
   {
   int nDaysToNextStage = 0;
   _SINGLE_DAY* thisDay = repFirstDay;
@@ -421,7 +421,7 @@ int SimulateInitialCall( _CONFIG* conf,
         if( salesRep->handoffFee > 0 )
           {
           Event( "Paying %s %.1lf for a successful lead", salesRep->id, salesRep->handoffFee );
-          thisDay->fees = NewPayEvent( thisDay->date, salesRep, pt_commission, salesRep->handoffFee, thisDay->fees );
+          thisDay->fees = NewPayEvent( conf, thisDay->date, salesRep, pt_commission, salesRep->handoffFee, thisDay->fees );
           }
 
         int y = thisDay->date.year;
@@ -538,7 +538,7 @@ int SimulateInitialCall( _CONFIG* conf,
   return 0;
   }
 
-void PayFirstMonthPartialSalary( _SALES_REP* s )
+void PayFirstMonthPartialSalary( _CONFIG* conf, _SALES_REP* s )
   {
   _SINGLE_DAY* repLastDay = s->workDays + s->nWorkDays;
 
@@ -554,16 +554,16 @@ void PayFirstMonthPartialSalary( _SALES_REP* s )
   salaryPerDay /= 365.0;
   double salaryFirstMonth = salaryPerDay * (double)nDaysFirstMonth;
 
-  s->workDays->fees = NewPayEvent( s->workDays->date, s, pt_salary, salaryFirstMonth, s->workDays->fees );
+  s->workDays->fees = NewPayEvent( conf, s->workDays->date, s, pt_salary, salaryFirstMonth, s->workDays->fees );
   Event( "Pay rep %s initial salary of %.1lf/mo at %04d-%02d-%02d",
          s->id, salaryFirstMonth, s->workDays->date.year, s->workDays->date.month, s->workDays->date.day );
   }
 
-void AdjustSalaryLastMonth( _SALES_REP* s, _SINGLE_DAY* lastDay, double monthlySalary, int lastMonthWorkDays )
+void AdjustSalaryLastMonth( _CONFIG* conf, _SALES_REP* s, _SINGLE_DAY* lastDay, double monthlySalary, int lastMonthWorkDays )
   {
   double salaryPerDay = ( monthlySalary * 12.0 ) / 365.0; /* may have changed due to annual increases */
   double salaryLastMonth = salaryPerDay * (double)(lastMonthWorkDays - 30); /* approximation of 30 days/month is good enough */
-  lastDay->fees = NewPayEvent( lastDay->date, s, pt_salary, salaryLastMonth, lastDay->fees );
+  lastDay->fees = NewPayEvent( conf, lastDay->date, s, pt_salary, salaryLastMonth, lastDay->fees );
   Event( "Adjust rep %s salary by %.1lf at %04d-%02d-%02d due to end of employment",
          s->id, salaryLastMonth, lastDay->date.year, lastDay->date.month, lastDay->date.day );
   }
@@ -580,7 +580,7 @@ void PaySingleRepSalary( _CONFIG* conf, _SALES_REP* s )
   int yearNo = 0;
   double salary = s->monthlyPay;
 
-  PayFirstMonthPartialSalary( s );
+  PayFirstMonthPartialSalary( conf, s );
 
   int nDaysSinceSalary = 0;
   for( int i=0; (i < s->nWorkDays)
@@ -605,7 +605,7 @@ void PaySingleRepSalary( _CONFIG* conf, _SALES_REP* s )
           }
         }
 
-      repDay->fees = NewPayEvent( repDay->date, s, pt_salary, salary, repDay->fees );
+      repDay->fees = NewPayEvent( conf, repDay->date, s, pt_salary, salary, repDay->fees );
       /*
       Event( "Pay rep %s salary of %.1lf at %04d-%02d-%02d",
              s->id, salary, repDay->date.year, repDay->date.month, repDay->date.day );
@@ -622,7 +622,7 @@ void PaySingleRepSalary( _CONFIG* conf, _SALES_REP* s )
   if( prevDay==NULL )
     Warning( "Trying to adjust last month salary for %s but no 'last good day'", s->id );
   else
-    AdjustSalaryLastMonth( s, prevDay, salary, nDaysSinceSalary );
+    AdjustSalaryLastMonth( conf, s, prevDay, salary, nDaysSinceSalary );
   }
 
 _SINGLE_DAY* FindRepDay( _SALES_REP* s, time_t theTime, _MMDD* theDay )

@@ -175,3 +175,19 @@ void RecordCashEvents( _CONFIG* conf )
       }
     }
   }
+
+void RecordDailyExpense( _CONFIG* conf, _MMDD* when, double amount )
+  {
+  if( conf==NULL || conf->baselineWorkDays==NULL )
+    return;
+  if( when==NULL )
+    return;
+  int dayNumber = NumberOfDays( &(conf->simulationFirstDay), when) - 1;
+  _SINGLE_DAY* dayPtr = conf->baselineWorkDays + dayNumber;
+  dayPtr->cashOnHand -= amount;
+  }
+
+void RecordDailyIncome( _CONFIG* conf, _MMDD* when, double amount )
+  {
+  RecordDailyExpense( conf, when, -1.0 * amount );
+  }

@@ -28,5 +28,7 @@ void FreeCashEventList( _CASH_EVENT* list );
 void RecordCashEvents( _CONFIG* conf );
 void PrintCashEvent( _CASH_EVENT* ce, FILE* f );
 void PrintAllCashEvents( _CONFIG* conf, FILE* f );
+void RecordDailyExpense( _CONFIG* conf, _MMDD* when, double amount );
+void RecordDailyIncome( _CONFIG* conf, _MMDD* when, double amount );
 
 #endif

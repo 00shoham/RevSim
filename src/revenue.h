@@ -9,7 +9,7 @@ typedef struct _revenueEvent
   struct _revenueEvent* next;
   } _REVENUE_EVENT;
 
-_REVENUE_EVENT* NewRevenueEvent( _MMDD when, int customerNumber, _SALES_REP* s, int eventNumber, double revenue, _REVENUE_EVENT* list );
+_REVENUE_EVENT* NewRevenueEvent( _CONFIG* conf, _MMDD when, int customerNumber, _SALES_REP* s, int eventNumber, double revenue, _REVENUE_EVENT* list );
 void FreeRevenueEvent( _REVENUE_EVENT* r );
 
 enum pay_type { pt_invalid, pt_commission, pt_salary, pt_revenue };
@@ -24,7 +24,7 @@ typedef struct _payEvent
   struct _payEvent* next;
   } _PAY_EVENT;
 
-_PAY_EVENT* NewPayEvent( _MMDD when, _SALES_REP* s, enum pay_type type, double amount, _PAY_EVENT* list );
+_PAY_EVENT* NewPayEvent( _CONFIG* conf, _MMDD when, _SALES_REP* s, enum pay_type type, double amount, _PAY_EVENT* list );
 void FreePayEvent( _PAY_EVENT* p );
 
 typedef struct _singleDay

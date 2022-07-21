@@ -108,33 +108,34 @@ int main( int argc, char** argv )
 
   printf( "Stepping through the timeline and simulating calls.\n" );
 
+  double carryForwardCashBalance = 0;
+
   for( time_t tSim = conf->simulationStart;
        dayNo < conf->simulationDurationDays
        && tSim <= conf->simulationEnd;
        tSim += DAY_IN_SECONDS )
     {
-    if( dayNo < conf->simulationDurationDays )
-      {
-      if( day->date.day==1 )
-        {
-        if( day->month!=NULL )
-          {
-          day->month->nAvailableOrgs = CountAvailableOrgs( conf, tSim );
-          }
-        }
-      }
+    day->cashOnHand += carryForwardCashBalance;
+
+    /* for reporting purposes, count how many orgs are left to call: */
+    if( dayNo < conf->simulationDurationDays
+        && day->date.day==1
+        && day->month!=NULL )
+      day->month->nAvailableOrgs = CountAvailableOrgs( conf, tSim );
+
+    /* QQQ figure out if we owe income tax and pay it here */
 
     if( day->working==0 ) /* nobody working this day */
       {
       Event( "Nobody working on %04d-%02d-%02d", day->date.year, day->date.month, day->date.day );
-      ++day;
-      continue;
+      }
+    else
+      {
+      SimulateCalls( conf, dayNo, tSim );
       }
 
-    SimulateCalls( conf, dayNo, tSim );
-
+    carryForwardCashBalance = day->cashOnHand;
     ++day;
-
     ++dayNo;
     }
 

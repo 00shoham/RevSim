@@ -1,3 +1,6 @@
+* Check that RandomRepFromClassList does not fail if first attempt
+  is too busy
+
 * Add income tax expenses.  Probably just post-process the annual revenue
   and inject quarterly tax payments.  Need config to work out tax rates
   based on levels of revenue.
