@@ -832,6 +832,8 @@ int ProcessKeywordPair( _CONFIG* config, char* variable, char* value )
     eventType = et_tax_refund;
   else if( strcasecmp( variable, "ONE_TIME_INCOME" )==0 )
     eventType = et_one_time_income;
+  else if( strcasecmp( variable, "ONE_TIME_EXPENSE" )==0 )
+    eventType = et_one_time_expense;
 
   if( eventType != et_invalid )
     {

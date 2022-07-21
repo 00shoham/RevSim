@@ -54,12 +54,13 @@ char* CashEventTypeName( enum eventType et )
   {
   switch( et )
     {
-    case et_invalid:         return "INVALID_CASH_EVENT_TYPE";
-    case et_investment:      return "INVESTMENT";
-    case et_grant:           return "GRANT";
-    case et_tax_refund:      return "TAX_REFUND";
-    case et_one_time_income: return "ONE_TIME_INCOME";
-    default:                 return "INVALID_CE_TYPE";
+    case et_invalid:          return "INVALID_CASH_EVENT_TYPE";
+    case et_investment:       return "INVESTMENT";
+    case et_grant:            return "GRANT";
+    case et_tax_refund:       return "TAX_REFUND";
+    case et_one_time_income:  return "ONE_TIME_INCOME";
+    case et_one_time_expense: return "ONE_TIME_EXPENSE";
+    default:                  return "INVALID_CE_TYPE";
     }
   }
 
@@ -137,5 +138,40 @@ void RecordCashEvents( _CONFIG* conf )
     firstDay->cashOnHand = conf->initialCashBalance;
     }
 
-  /* QQQ */
+  /* add the one time events to the cash position in each baseline day */
+  int eventNum = 0;
+  for( _CASH_EVENT* cePtr = conf->cashEventArray;
+       eventNum<conf->nCashEvents; ++cePtr, ++eventNum )
+    {
+    int dayNumber = NumberOfDays( &(conf->simulationFirstDay), &(cePtr->when) ) - 1;
+    _SINGLE_DAY* dayPtr = conf->baselineWorkDays + dayNumber;
+    switch( cePtr->type )
+      {
+      case et_investment:
+        dayPtr->cashOnHand += cePtr->value;
+        break;
+
+      case et_grant:
+        dayPtr->cashOnHand += cePtr->value;
+        break;
+
+      case et_tax_refund:
+        dayPtr->cashOnHand += cePtr->value;
+        break;
+
+      case et_one_time_income:
+        dayPtr->cashOnHand += cePtr->value;
+        break;
+
+      case et_one_time_expense:
+        dayPtr->cashOnHand -= cePtr->value;
+        break;
+
+      default:
+        Error( "Cash event at %04d-%02d-%02d has invalid type",
+               cePtr->when.year,
+               cePtr->when.month,
+               cePtr->when.day );
+      }
+    }
   }

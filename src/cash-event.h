@@ -8,7 +8,9 @@ enum eventType { et_invalid,
                  et_investment,
                  et_grant,
                  et_tax_refund,
-                 et_one_time_income };
+                 et_one_time_income,
+                 et_one_time_expense
+               };
 
 typedef struct _cashEvent
   {
