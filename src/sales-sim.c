@@ -437,6 +437,20 @@ int SimulateInitialCall( _CONFIG* conf,
         thisDay = FindSingleDay( &(thisDay->date), newRep->workDays, newRep->nWorkDays );
         repLastDay = newRep->workDays + newRep->nWorkDays;
 
+        while( thisDay < repLastDay )
+          if( thisDay->working==0 || thisDay->nCalls >= thisDay->maxCalls )
+            ++thisDay;
+          else
+            break;
+
+        if( thisDay >= repLastDay )
+          {
+          thisDay = NULL;
+          Event( "Rep %s too busy on %04d-%02d-%02d - dropping the sales process",
+                 salesRep->id, y, m, d );
+          return 0;
+          }
+
         Event( "%s will try to connect with customer starting on %04d-%02d-%02d",
                newRep->id, thisDay->date.year, thisDay->date.month, thisDay->date.day );
         }
@@ -444,6 +458,7 @@ int SimulateInitialCall( _CONFIG* conf,
         {
         Warning( "Sales stage %s requires a rep in a different class than %s (%s) - nobody found.",
                  stage->id, salesRep->id, salesRep->class->id );
+        return 0;
         }
       }
 
@@ -505,7 +520,6 @@ int SimulateInitialCall( _CONFIG* conf,
 
       return 0;
       }
-
   
     if( stageNo == product->nSalesStages-1 )
       Warning( "Attempt to proceed to sales stage %d - for product %s but there is no such stage!",
