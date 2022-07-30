@@ -228,6 +228,103 @@ void FreeSalesRep( _SALES_REP* r )
   free( r );
   }
 
+/* If end date happens before simulation end and if
+ * rep class calls for auto replace, then create a new sales
+ * rep.  Maybe do that in another function before here,
+ * so that validation works for that one too.  Or maybe stick
+ * it on the end of the list, so the caller will get to it.
+ * Don't forget salary escalation.
+ */
+void AppendReplacementSalesRepInList( _CONFIG* config, _SALES_REP* r )
+  {
+  Event( "Rep %s ends on %04d-%02d-%02d - auto-replacing",
+          r->id, r->lastDay.year, r->lastDay.month, r->lastDay.day );
+
+  if( r->class->averageEmploymentMonths<1 )
+    Error( "Try to automatically replace rep %s but class REP_CLASS_AVG_MONTHS_EMPLOYMENT<1", r->id );
+
+  /* when does the new guy start? */
+  int avgDays = config->daysToAutoReplaceRepAvg;
+  int sdevDays = config->daysToAutoReplaceRepSDev;
+  if( avgDays<=0 || sdevDays<0 )
+    Error( "Trying to replace rep %s at %04d-%02d-%02d but replacement timing variables are wonky",
+           r->id, r->lastDay.year, r->lastDay.month, r->lastDay.day );
+  int nDays = (int)(RandN2( (double)avgDays, (double)sdevDays ) + 0.5 );
+
+  time_t lastGuyStartTime = MMDDToTime( &(r->firstDay) );
+  time_t lastGuyEndTime = MMDDToTime( &(r->lastDay) );
+  time_t tStart = lastGuyEndTime + nDays * DAY_IN_SECONDS;
+
+  /* when does the new guy end? */
+  int nMonths = (int)RandN2( r->class->averageEmploymentMonths, r->class->sdevEmploymentMonths );
+  time_t tEnd = tStart + 30 * nMonths * DAY_IN_SECONDS;
+  if( tEnd > config->simulationEnd )
+    tEnd = config->simulationEnd;
+
+  if( tEnd <= tStart )
+    Event( "Tried to auto-replace rep %s but too close to end of sim.", r->id );
+  else
+    {
+    /* create the new guy */
+    _SALES_REP* newRep = NewSalesRep( NULL, NULL );
+    memcpy( newRep, r, sizeof( _SALES_REP ) );
+    newRep->next = NULL;
+    newRep->nMonths = 0;
+    newRep->monthlySummary = NULL;
+
+    int oldNum = 0;
+    char cleanOldID[BUFLEN/2];
+    strncpy( cleanOldID, r->id, sizeof(cleanOldID)-1 );
+    char* ptr = strstr( cleanOldID, " (" );
+    if( ptr!=NULL )
+      {
+      (void)sscanf( ptr, " (%d)", &oldNum );
+      *ptr = 0;
+      }
+    int newNum = oldNum + 1;
+
+    char repID[BUFLEN];
+    snprintf( repID, sizeof(repID)-2, "%s (%d)", cleanOldID, newNum );
+    newRep->id = strdup( repID );
+
+    char cleanOldName[BUFLEN/2];
+    strncpy( cleanOldName, r->name, sizeof(cleanOldName)-1 );
+    ptr = strstr( cleanOldName, " (" );
+    if( ptr!=NULL )
+      *ptr = 0;
+
+    char repName[BUFLEN];
+    snprintf( repName, sizeof(repName), "%s (%d)", cleanOldName, newNum );
+    newRep->name = strdup( repName );
+
+    if( TimeToMMDD( tStart, &(newRep->firstDay) )!=0 )
+      Error( "Failed to set start date for %s", newRep->id );
+    if( TimeToMMDD( tEnd, &(newRep->lastDay) )!=0 )
+      Error( "Failed to set end date for rep %s", r->id );
+
+    /* pay may be a bit higher */
+    double annualPay = r->annualPay;
+    long secondsElapsed = tStart - lastGuyStartTime;
+    long daysElapsed = secondsElapsed / DAY_IN_SECONDS;
+    double yearsElapsed = (double)daysElapsed / 365.0; 
+    annualPay *= pow( 1.0 + r->class->annualPayIncreasePercent / 100.0, yearsElapsed );
+    newRep->annualPay = round( annualPay );
+    newRep->monthlyPay = round( annualPay / 12.0 );
+    
+    /* add the new rep to the config */
+    ++ config->nSalesReps;
+    _SALES_REP **sPtr;
+    for( sPtr = &r->next;
+         sPtr!=NULL && *(sPtr)!=NULL;
+         sPtr = &( (*sPtr)->next ) )
+      ;
+    if( sPtr!=NULL && *sPtr==NULL )
+      *sPtr = newRep;
+    else
+      Error( "Tried to append a sales rep but got a NULL ptr-ptr" );
+    }
+  }
+
 int ValidateSingleSalesRep( _SALES_REP* r, _CONFIG* config )
   {
   if( r==NULL || EMPTY( r->id ) )
@@ -276,101 +373,10 @@ int ValidateSingleSalesRep( _SALES_REP* r, _CONFIG* config )
     return -3;
     }
 
-  /* QQQ If end date happens before simulation end and if
-     rep class calls for auto replace, then create a new sales
-     rep.  Maybe do that in another function before here,
-     so that validation works for that one too.  Or maybe stick
-     it on the end of the list, so the caller will get to it.
-     Don't forget salary escalation.*/
   if( r->class->autoReplace
       && MMDDToTime( &(r->lastDay ) ) <= (config->simulationEnd - DAY_IN_SECONDS) )
-    { /* we need a new rep to replace this one */
-    Event( "Rep %s ends on %04d-%02d-%02d - auto-replacing",
-            r->id, r->lastDay.year, r->lastDay.month, r->lastDay.day );
-
-    if( r->class->averageEmploymentMonths<1 )
-      Error( "Try to automatically replace rep %s but class REP_CLASS_AVG_MONTHS_EMPLOYMENT<1", r->id );
-
-    /* when does the new guy start? */
-    int avgDays = config->daysToAutoReplaceRepAvg;
-    int sdevDays = config->daysToAutoReplaceRepSDev;
-    if( avgDays<=0 || sdevDays<0 )
-      Error( "Trying to replace rep %s at %04d-%02d-%02d but replacement timing variables are wonky",
-             r->id, r->lastDay.year, r->lastDay.month, r->lastDay.day );
-    int nDays = (int)(RandN2( (double)avgDays, (double)sdevDays ) + 0.5 );
-
-    time_t lastGuyStartTime = MMDDToTime( &(r->firstDay) );
-    time_t lastGuyEndTime = MMDDToTime( &(r->lastDay) );
-    time_t tStart = lastGuyEndTime + nDays * DAY_IN_SECONDS;
-
-    /* when does the new guy end? */
-    int nMonths = (int)RandN2( r->class->averageEmploymentMonths, r->class->sdevEmploymentMonths );
-    time_t tEnd = tStart + 30 * nMonths * DAY_IN_SECONDS;
-    if( tEnd > config->simulationEnd )
-      tEnd = config->simulationEnd;
-
-    if( tEnd <= tStart )
-      Event( "Tried to auto-replace rep %s but too close to end of sim.", r->id );
-    else
-      {
-      /* create the new guy */
-      _SALES_REP* newRep = NewSalesRep( NULL, NULL );
-      memcpy( newRep, r, sizeof( _SALES_REP ) );
-      newRep->next = NULL;
-      newRep->nMonths = 0;
-      newRep->monthlySummary = NULL;
-
-      int oldNum = 0;
-      char cleanOldID[BUFLEN/2];
-      strncpy( cleanOldID, r->id, sizeof(cleanOldID)-1 );
-      char* ptr = strstr( cleanOldID, " (" );
-      if( ptr!=NULL )
-        {
-        (void)sscanf( ptr, " (%d)", &oldNum );
-        *ptr = 0;
-        }
-      int newNum = oldNum + 1;
-
-      char repID[BUFLEN];
-      snprintf( repID, sizeof(repID)-2, "%s (%d)", cleanOldID, newNum );
-      newRep->id = strdup( repID );
-
-      char cleanOldName[BUFLEN/2];
-      strncpy( cleanOldName, r->name, sizeof(cleanOldName)-1 );
-      ptr = strstr( cleanOldName, " (" );
-      if( ptr!=NULL )
-        *ptr = 0;
-
-      char repName[BUFLEN];
-      snprintf( repName, sizeof(repName), "%s (%d)", cleanOldName, newNum );
-      newRep->name = strdup( repName );
-
-      if( TimeToMMDD( tStart, &(newRep->firstDay) )!=0 )
-        Error( "Failed to set start date for %s", newRep->id );
-      if( TimeToMMDD( tEnd, &(newRep->lastDay) )!=0 )
-        Error( "Failed to set end date for rep %s", r->id );
-
-      /* pay may be a bit higher */
-      double annualPay = r->annualPay;
-      long secondsElapsed = tStart - lastGuyStartTime;
-      long daysElapsed = secondsElapsed / DAY_IN_SECONDS;
-      double yearsElapsed = (double)daysElapsed / 365.0; 
-      annualPay *= pow( 1.0 + r->class->annualPayIncreasePercent / 100.0, yearsElapsed );
-      newRep->annualPay = round( annualPay );
-      newRep->monthlyPay = round( annualPay / 12.0 );
-      
-      /* add the new rep to the config */
-      ++ config->nSalesReps;
-      _SALES_REP **sPtr;
-      for( sPtr = &r->next;
-           sPtr!=NULL && *(sPtr)!=NULL;
-           sPtr = &( (*sPtr)->next ) )
-        ;
-      if( sPtr!=NULL && *sPtr==NULL )
-        *sPtr = newRep;
-      else
-        Error( "Tried to append a sales rep but got a NULL ptr-ptr" );
-      }
+    { /* we need a new rep to replace this one - create one and put him at the tail end of the list of reps. */
+    AppendReplacementSalesRepInList( config, r );
     }
 
   if( r->annualPay==0 )
@@ -390,7 +396,6 @@ int ValidateSingleSalesRep( _SALES_REP* r, _CONFIG* config )
       return -6;
       }
     }
-
 
   return 0;
   }
