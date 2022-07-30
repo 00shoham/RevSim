@@ -83,7 +83,6 @@ typedef struct _classPointer
 
 _CLASS_POINTER* NewClassPointer( _SALES_REP_CLASS* class, _CLASS_POINTER* list );
 void FreeClassPointer( _CLASS_POINTER* list );
-void PrintClassPointer( _CLASS_POINTER* cp );
 int SalesRepInIndicatedClass( _CLASS_POINTER* cp, _SALES_REP* rep );
 
 #endif

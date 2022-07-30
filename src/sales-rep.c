@@ -517,10 +517,6 @@ void FreeClassPointer( _CLASS_POINTER* list )
   free( list );
   }
 
-void PrintClassPointer( _CLASS_POINTER* cp )
-  { /* QQQ materialize and call */
-  }
-
 int RepClassInList( _SALES_REP_CLASS* class, _CLASS_POINTER* list )
   {
   if( class==NULL && list==NULL )

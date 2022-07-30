@@ -360,14 +360,13 @@ void CloseSingleSale( _CONFIG* conf,
 /* return 0 for good call, -1 for no more calls by this rep on this day, please */
 int SimulateInitialCall( _CONFIG* conf,
                          _SALES_REP* salesRep,
-                         _SINGLE_DAY* repFirstDay, /*QQQ need args? implicit in salesRep */
+                         _SINGLE_DAY* thisDay,
                          _SINGLE_DAY* repLastDay,
                          _PRODUCT* product )
   {
   int nDaysToNextStage = 0;
-  _SINGLE_DAY* thisDay = repFirstDay;
 
-  // Notice( "SimulateInitialCall( rep=%s, firstDay=%d )", salesRep->id, repFirstDay - salesRep->workDays );
+  // Notice( "SimulateInitialCall( rep=%s, thisDay=%d )", salesRep->id, thisDay - salesRep->workDays );
 
   if( conf->marketSize>0 /* unlimited */
       && conf->nAvailableOrgs<=0 )
@@ -435,8 +434,11 @@ int SimulateInitialCall( _CONFIG* conf,
           return -2;
           }
         salesRep = newRep;
-        repFirstDay = newRep->workDays;
-        repLastDay = repFirstDay + newRep->nWorkDays;
+        thisDay = FindSingleDay( &(thisDay->date), newRep->workDays, newRep->nWorkDays );
+        repLastDay = newRep->workDays + newRep->nWorkDays;
+
+        Event( "%s will try to connect with customer starting on %04d-%02d-%02d",
+               newRep->id, thisDay->date.year, thisDay->date.month, thisDay->date.day );
         }
       else
         {
