@@ -148,6 +148,11 @@ void RecordCashEvents( _CONFIG* conf )
     _SINGLE_DAY* dayPtr = conf->baselineWorkDays + dayNumber;
     if( dayNumber==0 )
       Notice( "Adjusting initial cash balance by +/- %.2lf", cePtr->value );
+
+    dayPtr->cashEvents = NewCashEvent( cePtr->type,
+                                       cePtr->when,
+                                       cePtr->value,
+                                       dayPtr->cashEvents );
     switch( cePtr->type )
       {
       case et_investment:
@@ -240,6 +245,11 @@ void PrintDailyCash( FILE* f, _CONFIG* conf )
                PayTypeName( pe->type ),
                pe->rep==NULL ? "" : pe->rep->id,
                pe->amount );
+
+    for( _CASH_EVENT* ce = day->cashEvents; ce!=NULL; ce=ce->next )
+      fprintf( f, "  ==> Event (%s) - %10.2f\n",
+               CashEventTypeName( ce->type ),
+               ce->value );
 
     cash = day->cashOnHand;
     }

@@ -15,6 +15,7 @@ void FreeRevenueEvent( _REVENUE_EVENT* r );
 enum pay_type { pt_invalid, pt_commission, pt_salary, pt_revenue };
 
 typedef struct _salesRep _SALES_REP;
+typedef struct _cashEvent _CASH_EVENT;
 
 typedef struct _payEvent
   {
@@ -36,6 +37,7 @@ typedef struct _singleDay
   int maxCalls;
   _REVENUE_EVENT* dailySales;
   _PAY_EVENT* fees;
+  _CASH_EVENT* cashEvents;
   _MONTHLY_SUMMARY* month;
   double cashOnHand;
   } _SINGLE_DAY;

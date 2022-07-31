@@ -79,6 +79,11 @@ void FreeConfig( _CONFIG* config )
         FreePayEvent( day->fees );
         day->fees = NULL;
         }
+      if( day->cashEvents != NULL )
+        {
+        FreeCashEventList( day->cashEvents );
+        day->cashEvents = NULL;
+        }
       }
     FREE( config->baselineWorkDays );
     }

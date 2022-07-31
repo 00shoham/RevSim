@@ -115,7 +115,14 @@ int main( int argc, char** argv )
        && tSim <= conf->simulationEnd;
        tSim += DAY_IN_SECONDS )
     {
+    if( day->cashOnHand>0 )
+      Notice( "%04d-%02d-%02d already has cash on hand of %.2lf",
+              day->date.year, day->date.month, day->date.day,
+              day->cashOnHand );
     day->cashOnHand += carryForwardCashBalance;
+    Notice( "%04d-%02d-%02d cash on hand grew to %.2lf",
+            day->date.year, day->date.month, day->date.day,
+            day->cashOnHand );
 
     /* for reporting purposes, count how many orgs are left to call: */
     if( dayNo < conf->simulationDurationDays
