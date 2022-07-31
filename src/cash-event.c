@@ -57,6 +57,7 @@ char* CashEventTypeName( enum eventType et )
     case et_invalid:          return "INVALID_CASH_EVENT_TYPE";
     case et_investment:       return "INVESTMENT";
     case et_grant:            return "GRANT";
+    case et_tax_payment:      return "TAX_PAYMENT";
     case et_tax_refund:       return "TAX_REFUND";
     case et_one_time_income:  return "ONE_TIME_INCOME";
     case et_one_time_expense: return "ONE_TIME_EXPENSE";
@@ -145,6 +146,8 @@ void RecordCashEvents( _CONFIG* conf )
     {
     int dayNumber = NumberOfDays( &(conf->simulationFirstDay), &(cePtr->when) ) - 1;
     _SINGLE_DAY* dayPtr = conf->baselineWorkDays + dayNumber;
+    if( dayNumber==0 )
+      Notice( "Adjusting initial cash balance by +/- %.2lf", cePtr->value );
     switch( cePtr->type )
       {
       case et_investment:
@@ -153,6 +156,10 @@ void RecordCashEvents( _CONFIG* conf )
 
       case et_grant:
         dayPtr->cashOnHand += cePtr->value;
+        break;
+
+      case et_tax_payment:
+        dayPtr->cashOnHand -= cePtr->value;
         break;
 
       case et_tax_refund:
@@ -197,12 +204,20 @@ void PrintDailyCash( FILE* f, _CONFIG* conf )
   if( f==NULL || conf==NULL || conf->baselineWorkDays==NULL )
     return;
 
+  double cash = conf->initialCashBalance;
+  fprintf( f, "Initial cash balance: %.2lf\n", cash );
+
   _SINGLE_DAY* lastDay = conf->baselineWorkDays + conf->nBaselineWorkDays;
-  double cash = 0;
+
   for( _SINGLE_DAY* day = conf->baselineWorkDays; day<lastDay; ++day )
     {
+#if 0
     if( day->working==0 )
+      {
+      fprintf( f, "\n" );
       continue;
+      }
+#endif
 
     int sign = ' ';
     if( day->cashOnHand > cash )

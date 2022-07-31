@@ -154,10 +154,9 @@ _PAY_EVENT* NewPayEvent( _CONFIG* conf,
 
 void FreePayEvent( _PAY_EVENT* p )
   {
-    return;
   if( p==NULL )
     return;
-  if( p->next!=NULL )
+  if( p!=NULL && p->next!=NULL )
     {
     FreePayEvent( p->next );
     p->next = NULL;

@@ -353,6 +353,16 @@ int EstablishWorkDays( _SALES_REP* s, _CONFIG* config )
           config->baselineWorkDays + daysDelay,
           s->nWorkDays * sizeof( _SINGLE_DAY ) );
 
+  /* ensure that the rep's daily fees don't point to the
+     common fees */
+  _SINGLE_DAY* day = s->workDays;
+  _SINGLE_DAY* lastDay = day + s->nWorkDays;
+  for( ; day<lastDay; ++day )
+    {
+    day->dailySales = NULL;
+    day->fees = NULL;
+    }
+
   _SALES_REP_CLASS* st = s->class;
   if( st==NULL )
     {
