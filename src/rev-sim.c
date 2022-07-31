@@ -176,7 +176,7 @@ int main( int argc, char** argv )
     FILE* f = fopen( cashFile, "w" );
     if( f!=NULL )
       {
-      /* QQQ PrintDailyCash( f, conf ); */
+      PrintDailyCash( f, conf );
       fclose( f );
       }
     else

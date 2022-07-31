@@ -23,6 +23,7 @@ int CalculateBaselineWorkingDays( _CONFIG* config )
     }
 
   config->baselineWorkDays = (_SINGLE_DAY*)SafeCalloc( nDays+1, sizeof(_SINGLE_DAY), "baseline working days" );
+  config->nBaselineWorkDays = nDays;
 
   time_t t = config->simulationStart;
   int dow = DayOfWeek( t );

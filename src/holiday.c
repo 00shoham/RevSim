@@ -4,7 +4,7 @@ _HOLIDAY* NewHoliday( char* id, _HOLIDAY* list )
   {
   if( EMPTY( id ) )
     Error( "NewHoliday(NULL)" );
-  _HOLIDAY* h = SafeCalloc( 1, sizeof( _HOLIDAY ), "_HOLIDAY" );
+  _HOLIDAY* h = (_HOLIDAY*)SafeCalloc( 1, sizeof( _HOLIDAY ), "_HOLIDAY" );
   if( NOTEMPTY( id ) )
     h->id = strdup( id );
   h->next = list;

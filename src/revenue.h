@@ -40,4 +40,7 @@ typedef struct _singleDay
   double cashOnHand;
   } _SINGLE_DAY;
 
+char* PayTypeName( enum pay_type type );
+_SINGLE_DAY* FindSingleDay( _MMDD* date, _SINGLE_DAY* array, int arrayLen );
+
 #endif

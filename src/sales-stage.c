@@ -4,7 +4,7 @@ _SALES_STAGE* NewSalesStage( char* id, _SALES_STAGE* list )
   {
   if( EMPTY( id ) )
     Error( "NewSalesStage(NULL)" );
-  _SALES_STAGE* s = SafeCalloc( 1, sizeof( _SALES_STAGE ), "_SALES_STAGE" );
+  _SALES_STAGE* s = (_SALES_STAGE*)SafeCalloc( 1, sizeof( _SALES_STAGE ), "_SALES_STAGE" );
   if( NOTEMPTY( id ) )
     s->id = strdup( id );
   s->next = list;

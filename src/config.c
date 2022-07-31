@@ -65,7 +65,23 @@ void FreeConfig( _CONFIG* config )
   config->vacations = NULL;
 
   if( config->baselineWorkDays != NULL )
+    {
+    _SINGLE_DAY* lastDay = config->baselineWorkDays + config->nBaselineWorkDays;
+    for( _SINGLE_DAY* day = config->baselineWorkDays; day < lastDay; ++day )
+      {
+      if( day->dailySales != NULL )
+        {
+        FreeRevenueEvent( day->dailySales );
+        day->dailySales = NULL;
+        }
+      if( day->fees != NULL )
+        {
+        FreePayEvent( day->fees );
+        day->fees = NULL;
+        }
+      }
     FREE( config->baselineWorkDays );
+    }
 
   FreeSalesStage( config->stages );
   config->stages = NULL;

@@ -4,7 +4,7 @@ _VACATION* NewVacation( char* id, _VACATION* list )
   {
   if( EMPTY( id ) )
     Error( "NewVacation(NULL)" );
-  _VACATION* v = SafeCalloc( 1, sizeof( _VACATION ), "_VACATION" );
+  _VACATION* v = (_VACATION*)SafeCalloc( 1, sizeof( _VACATION ), "_VACATION" );
   if( NOTEMPTY( id ) )
     v->id = strdup( id );
   v->next = list;

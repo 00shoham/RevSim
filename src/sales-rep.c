@@ -4,7 +4,7 @@ _SALES_REP_CLASS* NewSalesRepClass( char* id, _SALES_REP_CLASS* list )
   {
   if( EMPTY( id ) )
     Error( "NewSalesRepClass(NULL)" );
-  _SALES_REP_CLASS* rt = SafeCalloc( 1, sizeof( _SALES_REP_CLASS ), "_SALES_REP_CLASS" );
+  _SALES_REP_CLASS* rt = (_SALES_REP_CLASS*)SafeCalloc( 1, sizeof( _SALES_REP_CLASS ), "_SALES_REP_CLASS" );
   if( NOTEMPTY( id ) )
     rt->id = strdup( id );
   rt->next = list;
@@ -179,7 +179,7 @@ _SALES_REP* NewSalesRep( char* id, _SALES_REP* list )
   if( EMPTY( id ) )
     Error( "NewSalesRep(NULL)" );
   */
-  _SALES_REP* r = SafeCalloc( 1, sizeof( _SALES_REP ), "_SALES_REP" );
+  _SALES_REP* r = (_SALES_REP*)SafeCalloc( 1, sizeof( _SALES_REP ), "_SALES_REP" );
   if( NOTEMPTY( id ) )
     r->id = strdup( id );
   r->next = list;
@@ -214,9 +214,15 @@ void FreeSalesRep( _SALES_REP* r )
     for( int i=0; i<r->nWorkDays; ++i )
       {
       if( day->dailySales!=NULL )
+        {
         FreeRevenueEvent( day->dailySales );
+        day->dailySales = NULL;
+        }
       if( day->fees!=NULL )
+        {
         FreePayEvent( day->fees );
+        day->fees = NULL;
+        }
       ++day;
       }
     FREE( r->workDays );

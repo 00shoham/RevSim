@@ -191,3 +191,42 @@ void RecordDailyIncome( _CONFIG* conf, _MMDD* when, double amount )
   {
   RecordDailyExpense( conf, when, -1.0 * amount );
   }
+
+void PrintDailyCash( FILE* f, _CONFIG* conf )
+  {
+  if( f==NULL || conf==NULL || conf->baselineWorkDays==NULL )
+    return;
+
+  _SINGLE_DAY* lastDay = conf->baselineWorkDays + conf->nBaselineWorkDays;
+  double cash = 0;
+  for( _SINGLE_DAY* day = conf->baselineWorkDays; day<lastDay; ++day )
+    {
+    if( day->working==0 )
+      continue;
+
+    int sign = ' ';
+    if( day->cashOnHand > cash )
+      sign = '+';
+    else if( day->cashOnHand < cash )
+      sign = '-';
+
+    fprintf( f, "%04d-%02d-%02d %12.2f   (%c%10.2f)\n",
+             day->date.year, day->date.month, day->date.day,
+             day->cashOnHand,
+             sign,
+             fabs(day->cashOnHand - cash) );
+
+    for( _REVENUE_EVENT* re = day->dailySales; re!=NULL; re=re->next )
+      fprintf( f, "  ==> Revenue (%d) from customer %d - %10.2f\n",
+               re->eventNumber, re->customerNumber, re->revenue );
+
+    for( _PAY_EVENT* pe = day->fees; pe!=NULL; pe=pe->next )
+      fprintf( f, "  ==> Charge (%s) %s - %10.2f\n",
+               PayTypeName( pe->type ),
+               pe->rep==NULL ? "" : pe->rep->id,
+               pe->amount );
+
+    cash = day->cashOnHand;
+    }
+
+  }

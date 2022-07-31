@@ -4,7 +4,7 @@ _PRODUCT* NewProduct( char* id, _PRODUCT* list )
   {
   if( EMPTY( id ) )
     Error( "NewProduct(NULL)" );
-  _PRODUCT* p = SafeCalloc( 1, sizeof( _PRODUCT ), "_PRODUCT" );
+  _PRODUCT* p = (_PRODUCT*)SafeCalloc( 1, sizeof( _PRODUCT ), "_PRODUCT" );
   if( NOTEMPTY( id ) )
     p->id = strdup( id );
   p->next = list;

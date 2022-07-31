@@ -1,6 +1,6 @@
 #include "base.h"
 
-char* RevTypeName( enum pay_type type )
+char* PayTypeName( enum pay_type type )
   {
   switch( type )
     {
@@ -47,7 +47,7 @@ void AddToSummary( enum pay_type type, _MMDD when, _SALES_REP* s, double amount 
   if( gotIt==0 )
     {
     Warning( "%s event for unexpected CCYY-MM (%04d-%02d) for %s (scanned %d months from %04d-%02d to %04d-%02d)",
-             RevTypeName( type ),
+             PayTypeName( type ),
              when.year, when.month,
              s->id,
              s->nMonths,
@@ -90,11 +90,20 @@ _REVENUE_EVENT* NewRevenueEvent( _CONFIG* conf,
                                  double revenue,
                                  _REVENUE_EVENT* list )
   {
-  _REVENUE_EVENT* p = SafeCalloc( 1, sizeof( _REVENUE_EVENT ), "_REVENUE_EVENT" );
+  _REVENUE_EVENT* p = (_REVENUE_EVENT*)SafeCalloc( 1, sizeof( _REVENUE_EVENT ), "_REVENUE_EVENT" );
   p->customerNumber = customerNumber;
   p->eventNumber = eventNumber;
   p->revenue = revenue;
   p->next = list;
+
+  _SINGLE_DAY* systemDay = FindSingleDay( &when, conf->baselineWorkDays, conf->nBaselineWorkDays );
+  if( systemDay!=NULL )
+    {
+    _REVENUE_EVENT* p2 = (_REVENUE_EVENT*)SafeCalloc( 1, sizeof( _REVENUE_EVENT ), "_REVENUE_EVENT (2)" );
+    memcpy( p2, p, sizeof( _REVENUE_EVENT ) );
+    p2->next = systemDay->dailySales;
+    systemDay->dailySales = p2;
+    }
 
   AddToSummary( pt_revenue, when, s, revenue );
 
@@ -121,11 +130,20 @@ _PAY_EVENT* NewPayEvent( _CONFIG* conf,
                          enum pay_type type, double amount,
                          _PAY_EVENT* list )
   {
-  _PAY_EVENT* p = SafeCalloc( 1, sizeof( _PAY_EVENT ), "_PAY_EVENT" );
+  _PAY_EVENT* p = (_PAY_EVENT*)SafeCalloc( 1, sizeof( _PAY_EVENT ), "_PAY_EVENT" );
   p->rep = s;
   p->type = type;
   p->amount = amount;
   p->next = list;
+
+  _SINGLE_DAY* systemDay = FindSingleDay( &when, conf->baselineWorkDays, conf->nBaselineWorkDays );
+  if( systemDay!=NULL )
+    {
+    _PAY_EVENT* p2 = (_PAY_EVENT*)SafeCalloc( 1, sizeof( _PAY_EVENT ), "_PAY_EVENT (2)" );
+    memcpy( p2, p, sizeof( _PAY_EVENT ) );
+    p2->next = systemDay->fees;
+    systemDay->fees = p2;
+    }
 
   AddToSummary( type, when, s, amount );
 
@@ -136,6 +154,7 @@ _PAY_EVENT* NewPayEvent( _CONFIG* conf,
 
 void FreePayEvent( _PAY_EVENT* p )
   {
+    return;
   if( p==NULL )
     return;
   if( p->next!=NULL )

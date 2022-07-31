@@ -30,5 +30,6 @@ void PrintCashEvent( _CASH_EVENT* ce, FILE* f );
 void PrintAllCashEvents( _CONFIG* conf, FILE* f );
 void RecordDailyExpense( _CONFIG* conf, _MMDD* when, double amount );
 void RecordDailyIncome( _CONFIG* conf, _MMDD* when, double amount );
+void PrintDailyCash( FILE* f, _CONFIG* conf );
 
 #endif

@@ -31,6 +31,7 @@ typedef struct _config
   _HOLIDAY* holidays;            /* stat holidays for everyone */
   _VACATION* vacations;          /* classes of vacation allocation */
   _SINGLE_DAY* baselineWorkDays;  /* calculated */
+  int nBaselineWorkDays;          /* calculated */
   int nWorkDaysPerYear;
 
   _SALES_STAGE* stages;
