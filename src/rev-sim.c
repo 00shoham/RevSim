@@ -115,14 +115,21 @@ int main( int argc, char** argv )
        && tSim <= conf->simulationEnd;
        tSim += DAY_IN_SECONDS )
     {
+
+#if 0
     if( day->cashOnHand>0 )
       Notice( "%04d-%02d-%02d already has cash on hand of %.2lf",
               day->date.year, day->date.month, day->date.day,
               day->cashOnHand );
+#endif
+
     day->cashOnHand += carryForwardCashBalance;
+
+#if 0
     Notice( "%04d-%02d-%02d cash on hand grew to %.2lf",
             day->date.year, day->date.month, day->date.day,
             day->cashOnHand );
+#endif
 
     /* for reporting purposes, count how many orgs are left to call: */
     if( dayNo < conf->simulationDurationDays
@@ -130,7 +137,27 @@ int main( int argc, char** argv )
         && day->month!=NULL )
       day->month->nAvailableOrgs = CountAvailableOrgs( conf, tSim );
 
-    /* QQQ figure out if we owe income tax and pay it here */
+    if( conf->taxRate>0
+        && day->date.month == 1
+        && day->date.day == 1 )
+      { /* happy new year!  now pay tax for last year. */
+      double netIncome = NetIncomeForYear( day->date.year-1, conf->monthlySummary, conf->nMonths );
+      if( netIncome>0 )
+        {
+        Notice( "Net income of %.2lf for year %04d", netIncome, day->date.year-1 );
+        _SINGLE_DAY* taxDay = day;
+
+        if( taxDay > conf->baselineWorkDays )
+          --taxDay; /* pay taxes at end of last year.. */
+
+        double taxAmount = netIncome * conf->taxRate / 100.0;
+        Notice( "Tax payable is %.2lf on %04d-%02d-%02d", taxAmount, taxDay->date.year, taxDay->date.month, taxDay->date.day );
+        taxDay->cashEvents = NewCashEvent( et_tax_payment,
+                                           taxDay->date,
+                                           taxAmount,
+                                           taxDay->cashEvents );
+        }
+      }
 
     if( day->working==0 ) /* nobody working this day */
       {
@@ -152,9 +179,11 @@ int main( int argc, char** argv )
   duration /= (double)conf->nCustomerWins;
   printf( "Average of %.1lf months before each customer is lost or the simulation ends\n", duration );
 
+  /* QQQ add these up as we go through the simulation, not at the end */
   for( _SALES_REP* s = conf->salesReps; s!=NULL; s=s->next )
     AddMonthlySummaries( conf->monthlySummary, conf->nMonths, s->monthlySummary, s->nMonths );
 
+  /* QQQ add these up as we go through the simulation, not at the end */
   AddMonthlySummaries( conf->monthlySummary, conf->nMonths, conf->customerCare->monthlySummary, conf->customerCare->nMonths );
 
   _SALES_REP** reps = SalesRepArray( conf->salesReps );

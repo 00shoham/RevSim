@@ -161,6 +161,8 @@ void RecordCashEvents( _CONFIG* conf )
 
       case et_grant:
         dayPtr->cashOnHand += cePtr->value;
+        if( dayPtr->month!=NULL )
+          dayPtr->month->revenue += cePtr->value;
         break;
 
       case et_tax_payment:
@@ -173,10 +175,14 @@ void RecordCashEvents( _CONFIG* conf )
 
       case et_one_time_income:
         dayPtr->cashOnHand += cePtr->value;
+        if( dayPtr->month!=NULL )
+          dayPtr->month->revenue += cePtr->value;
         break;
 
       case et_one_time_expense:
         dayPtr->cashOnHand -= cePtr->value;
+        if( dayPtr->month!=NULL )
+          dayPtr->month->expense += cePtr->value;
         break;
 
       default:

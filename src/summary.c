@@ -29,6 +29,60 @@ _MONTHLY_SUMMARY* FindSummaryRecord( char* subject,
   return NULL;
   }
 
+void AddToMonthlySummary( _MONTHLY_SUMMARY* array, int nMonths,
+                          int year, int month,
+                          double expense, double revenue )
+  {
+  if( array==NULL || nMonths==0 )
+    return;
+
+  _MONTHLY_SUMMARY* monthPtr = array;
+  int i = 0;
+  for( i=0; i<nMonths; ++i )
+    {
+    if( monthPtr->monthStart.year==year
+        && monthPtr->monthStart.month==month )
+      break;
+    ++monthPtr;
+    }
+
+  if( i==nMonths )
+    return;
+
+  if( expense>0 )
+    monthPtr->expense += expense;
+
+  if( revenue>0 )
+    monthPtr->revenue += revenue;
+  }
+
+double NetIncomeForYear( int year, _MONTHLY_SUMMARY* array, int nMonths )
+  {
+  if( array==NULL || nMonths==0 )
+    return 0;
+
+  double netIncome = 0;
+  _MONTHLY_SUMMARY* monthPtr = array;
+  for( int i=0; i<nMonths; ++i )
+    {
+    if( monthPtr->monthStart.year == year )
+      {
+      netIncome += monthPtr->revenue;
+      netIncome -= monthPtr->commission;
+      netIncome -= monthPtr->salary;
+      netIncome -= monthPtr->expense;
+      Notice( "Net income becomes %.2lf after %04d-%02d",
+              netIncome, monthPtr->monthStart.year, monthPtr->monthStart.month );
+      }
+    else if( monthPtr->monthStart.year > year )
+      break;
+
+    ++monthPtr;
+    }
+
+  return netIncome;
+  }
+
 void AddMonthlySummaries( _MONTHLY_SUMMARY* dst, int nDst, _MONTHLY_SUMMARY* src, int nSrc )
   {
   int i = 0;
@@ -81,6 +135,7 @@ void PrintRevenueSummary( FILE* out, _MONTHLY_SUMMARY* ms, int nMonths, char* ti
   double revTotal = 0;
   double comTotal = 0;
   double salTotal = 0;
+  double expTotal = 0;
   double net = 0;
   double netTotal = 0;
 
@@ -93,31 +148,33 @@ void PrintRevenueSummary( FILE* out, _MONTHLY_SUMMARY* ms, int nMonths, char* ti
     fputc( '-', out );
   fputc( '\n', out );
 
-  fprintf( out, "CCYY-MM %11s %11s %11s %11s %11s\n",
-           "Revenue", "Commission", "Salary", "This month", "Total" );
-  fprintf( out, "        %11s %11s %11s %11s %11s\n",
-           "-----------", "-----------", "-----------", "-----------", "-----------" );
+  fprintf( out, "CCYY-MM %11s %11s %11s %11s %11s %11s\n",
+           "Revenue", "Commission", "Salary", "Expense", "This month", "Total" );
+  fprintf( out, "        %11s %11s %11s %11s %11s %11s\n",
+           "-----------", "-----------", "-----------", "-----------", "-----------", "-----------" );
 
   for( int k=0; k < nMonths; ++k )
     {
-    net = ms->revenue - ms->salary - ms->commission;
+    net = ms->revenue - ms->salary - ms->commission - ms->expense;
     netTotal += net;
 
     revTotal += ms->revenue;
     salTotal += ms->salary;
     comTotal += ms->commission;
-    fprintf( out, "%04d-%02d % 11.2f % 11.2f % 11.2f % 11.2f % 11.2f\n",
+    expTotal += ms->expense;
+
+    fprintf( out, "%04d-%02d % 11.2f % 11.2f % 11.2f % 11.2f % 11.2f % 11.2f\n",
                   ms->monthStart.year, ms->monthStart.month,
-                  ms->revenue, ms->commission, ms->salary,
+                  ms->revenue, ms->commission, ms->salary, ms->expense,
                   net, netTotal );
     ++ms;
     }
 
-  fprintf( out, "        %11s %11s %11s %11s %11s\n",
-           "-----------", "-----------", "-----------", "-----------", "-----------" );
+  fprintf( out, "        %11s %11s %11s %11s %11s %11s\n",
+           "-----------", "-----------", "-----------", "-----------", "-----------", "-----------" );
 
-  fprintf( out, " Total: % 11.2f % 11.2f % 11.2f %11s % 11.2f\n",
-                revTotal, comTotal, salTotal, " ",
+  fprintf( out, " Total: % 11.2f % 11.2f % 11.2f % 11.2f %11s % 11.2f\n",
+                revTotal, comTotal, salTotal, expTotal, " ",
                 netTotal );
 
   fprintf( out, "\n" );
@@ -204,3 +261,4 @@ void PrintCounters( FILE* f, _CONFIG* conf )
            totalLosses,
            totalTransfers );
   }
+
