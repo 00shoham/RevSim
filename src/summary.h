@@ -27,5 +27,6 @@ void AddToMonthlySummary( _MONTHLY_SUMMARY* array, int nMonths,
 void PrintRevenueSummary( FILE* out, _MONTHLY_SUMMARY* ms, int nMonths, char* title );
 void PrintCounters( FILE* f, _CONFIG* conf );
 double NetIncomeForYear( int year, _MONTHLY_SUMMARY* array, int nMonths );
+void AddMonthlySummariesSingleMonth( _CONFIG* conf, int Y, int M );
 
 #endif

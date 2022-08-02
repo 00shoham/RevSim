@@ -132,6 +132,82 @@ void AddMonthlySummaries( _MONTHLY_SUMMARY* dst, int nDst, _MONTHLY_SUMMARY* src
     }
   }
 
+_MONTHLY_SUMMARY* FindMonthInArray( _MONTHLY_SUMMARY* array, int len, int Y, int M )
+  {
+  if( array==NULL || len==0 )
+    return NULL;
+  for( int i=0; i<len; ++i )
+    {
+    if( array->monthStart.year==Y
+        && array->monthStart.month==M )
+      return array;
+    ++array;
+    }
+  return NULL;
+  }
+
+void AddSummaryRecords( _MONTHLY_SUMMARY* dest, _MONTHLY_SUMMARY* src )
+  {
+  if( dest==NULL || src==NULL )
+    return;
+
+  dest->revenue += src->revenue;
+  dest->commission += src->commission;
+  dest->salary += src->salary;
+  dest->expense += src->expense;
+
+  dest->nCalls += src->nCalls;
+  dest->nAvailableOrgs += src->nAvailableOrgs;
+  dest->nCustomers += src->nCustomers;
+  dest->nWins += src->nWins;
+  dest->nRejections += src->nRejections;
+  dest->nLosses += src->nLosses;
+  dest->nTransfers += src->nTransfers;
+  }
+
+void AddMonthlySummariesSingleMonth( _CONFIG* conf, int Y, int M )
+  {
+  if( conf==NULL || Y<=0 || M<1 || M>12 || conf->monthlySummary==NULL )
+    {
+    Warning( "AddMonthlySummariesSingleMonth - bad inputs" );
+    return;
+    }
+
+  _MONTHLY_SUMMARY* destMonth = FindMonthInArray( conf->monthlySummary, conf->nMonths, Y, M );
+  if( destMonth==NULL )
+    {
+    Warning( "AddMonthlySummariesSingleMonth - cannot find output %04d-%02d", Y, M );
+    return;
+    }
+
+  if( conf->customerCare==NULL
+      || conf->customerCare->monthlySummary==NULL )
+    {
+    Warning( "No customer care?" );
+    return;
+    }
+
+  _MONTHLY_SUMMARY* cCareMonth = FindMonthInArray( conf->customerCare->monthlySummary, conf->nMonths, Y, M );
+  if( cCareMonth==NULL )
+    {
+    Warning( "AddMonthlySummariesSingleMonth - cannot find customer care for %04d-%02d", Y, M );
+    return;
+    }
+
+  AddSummaryRecords( destMonth, cCareMonth );
+
+  for( _SALES_REP* rep = conf->salesReps; rep!=NULL; rep=rep->next )
+    {
+    _MONTHLY_SUMMARY* repMonth = NULL;
+    if( rep->monthlySummary==NULL )
+      Warning( "Rep %s has no monthly summary", NULLPROTECT( rep->id ) );
+    else
+      repMonth = FindMonthInArray( rep->monthlySummary, conf->nMonths, Y, M );
+    if( repMonth!=NULL )
+      AddSummaryRecords( destMonth, repMonth );
+    }
+  }
+
 void PrintRevenueSummary( FILE* out, _MONTHLY_SUMMARY* ms, int nMonths, char* title )
   {
   if( ms==NULL || nMonths<1 || out==NULL || EMPTY( title ) )
