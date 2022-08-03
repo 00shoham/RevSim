@@ -145,6 +145,7 @@ int main( int argc, char** argv )
         && day->date.day == 1 )
       { /* happy new year!  now pay tax for last year. */
       double netIncome = NetIncomeForYear( day->date.year-1, conf->monthlySummary, conf->nMonths );
+      netIncome -= GetTaxLossCarryForward( conf, day->date.year-1 );
       if( netIncome>0 )
         {
         Notice( "Net income of %.2lf for year %04d", netIncome, day->date.year-1 );
@@ -162,6 +163,8 @@ int main( int argc, char** argv )
         taxDay->cashOnHand -= taxAmount;
         day->cashOnHand -= taxAmount;
         }
+      else
+        SetTaxLossCarryForward( conf, day->date.year, fabs(netIncome) );
       }
 
     if( day->working==0 ) /* nobody working this day */

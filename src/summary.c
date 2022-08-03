@@ -88,6 +88,31 @@ double NetIncomeForYear( int year, _MONTHLY_SUMMARY* array, int nMonths )
   return netIncome;
   }
 
+double GetTaxLossCarryForward( _CONFIG* conf, int Y )
+  {
+  _MONTHLY_SUMMARY* january = FindMonthInArray( conf->monthlySummary, conf->nMonths, Y, 1 );
+  if( january==NULL )
+    return 0;
+  else
+    {
+    if( january->taxLossCarryForward > 0 )
+      Notice( "Calendar %04d has a tax loss carry forward of %.2lf", Y, january->taxLossCarryForward );
+    return january->taxLossCarryForward;
+    }
+  }
+
+void SetTaxLossCarryForward( _CONFIG* conf, int Y, double amount )
+  {
+  _MONTHLY_SUMMARY* january = FindMonthInArray( conf->monthlySummary, conf->nMonths, Y, 1 );
+  if( january==NULL )
+    Warning( "Cannot find %04d-01 to set tax loss carry forward", Y );
+  else
+    {
+    /* Notice( "Setting the tax loss carry forward for calendar %04d to %.2lf", Y, amount ); */
+    january->taxLossCarryForward = amount;
+    }
+  }
+
 void AddMonthlySummaries( _MONTHLY_SUMMARY* dst, int nDst, _MONTHLY_SUMMARY* src, int nSrc )
   {
   int i = 0;

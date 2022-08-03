@@ -15,6 +15,7 @@ typedef struct _monthlySummary
   int nRejections;    /* e.g., did not want to close */
   int nLosses;        /* e.g., stopped using */
   int nTransfers;     /* e.g., opportunities moved from cold-call to AM */
+  double taxLossCarryForward; /* from previous year.  only set for month==1 (january) */
   } _MONTHLY_SUMMARY;
 
 _MONTHLY_SUMMARY* FindSummaryRecord( char* subject,
@@ -28,5 +29,8 @@ void PrintRevenueSummary( FILE* out, _MONTHLY_SUMMARY* ms, int nMonths, char* ti
 void PrintCounters( FILE* f, _CONFIG* conf );
 double NetIncomeForYear( int year, _MONTHLY_SUMMARY* array, int nMonths );
 void AddMonthlySummariesSingleMonth( _CONFIG* conf, int Y, int M );
+_MONTHLY_SUMMARY* FindMonthInArray( _MONTHLY_SUMMARY* array, int len, int Y, int M );
+double GetTaxLossCarryForward( _CONFIG* conf, int Y );
+void SetTaxLossCarryForward( _CONFIG* conf, int Y, double amount );
 
 #endif
