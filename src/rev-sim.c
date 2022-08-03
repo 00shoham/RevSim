@@ -105,6 +105,7 @@ int main( int argc, char** argv )
 
   int dayNo = 0;
   _SINGLE_DAY* day = conf->baselineWorkDays;
+  _SINGLE_DAY* lastDayWhenWeAddedSummaries = NULL;
 
   printf( "Stepping through the timeline and simulating calls.\n" );
 
@@ -115,27 +116,29 @@ int main( int argc, char** argv )
        && tSim <= conf->simulationEnd;
        tSim += DAY_IN_SECONDS )
     {
-
-#if 0
-    if( day->cashOnHand>0 )
-      Notice( "%04d-%02d-%02d already has cash on hand of %.2lf",
-              day->date.year, day->date.month, day->date.day,
-              day->cashOnHand );
-#endif
-
     day->cashOnHand += carryForwardCashBalance;
-
-#if 0
-    Notice( "%04d-%02d-%02d cash on hand grew to %.2lf",
-            day->date.year, day->date.month, day->date.day,
-            day->cashOnHand );
-#endif
 
     /* for reporting purposes, count how many orgs are left to call: */
     if( dayNo < conf->simulationDurationDays
         && day->date.day==1
         && day->month!=NULL )
       day->month->nAvailableOrgs = CountAvailableOrgs( conf, tSim );
+
+    /* if we just started a month, then add up the summaries
+       from all the reps plus customer care for the previous
+       month */
+    if( dayNo>0 && day->date.day==1 )
+      {
+      int M = day->date.month - 1;
+      int Y = day->date.year;
+      if( M==0 )
+        {
+        M=12;
+        --Y;
+        }
+      AddMonthlySummariesSingleMonth( conf, Y, M );
+      lastDayWhenWeAddedSummaries = day;
+      }
 
     if( conf->taxRate>0
         && day->date.month == 1
@@ -156,6 +159,8 @@ int main( int argc, char** argv )
                                            taxDay->date,
                                            taxAmount,
                                            taxDay->cashEvents );
+        taxDay->cashOnHand -= taxAmount;
+        day->cashOnHand -= taxAmount;
         }
       }
 
@@ -173,18 +178,20 @@ int main( int argc, char** argv )
     ++dayNo;
     }
 
+  /* do we have to add up summaries for the last month? */
+  if( lastDayWhenWeAddedSummaries != NULL
+      && lastDayWhenWeAddedSummaries != day-1 )
+    {
+    _SINGLE_DAY* d = day - 1;
+    if( d > conf->baselineWorkDays )
+      AddMonthlySummariesSingleMonth( conf, d->date.year - 1, d->date.month );
+    }
+
   printf( "Simulated %d days\n", dayNo );
   printf( "Total customer wins: %d\n", conf->nCustomerWins );
   double duration = conf->nCustomerMonths;
   duration /= (double)conf->nCustomerWins;
   printf( "Average of %.1lf months before each customer is lost or the simulation ends\n", duration );
-
-  /* QQQ add these up as we go through the simulation, not at the end */
-  for( _SALES_REP* s = conf->salesReps; s!=NULL; s=s->next )
-    AddMonthlySummaries( conf->monthlySummary, conf->nMonths, s->monthlySummary, s->nMonths );
-
-  /* QQQ add these up as we go through the simulation, not at the end */
-  AddMonthlySummaries( conf->monthlySummary, conf->nMonths, conf->customerCare->monthlySummary, conf->customerCare->nMonths );
 
   _SALES_REP** reps = SalesRepArray( conf->salesReps );
   for( int i=0; i<conf->nSalesReps; ++i )

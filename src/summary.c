@@ -202,7 +202,7 @@ void AddMonthlySummariesSingleMonth( _CONFIG* conf, int Y, int M )
     if( rep->monthlySummary==NULL )
       Warning( "Rep %s has no monthly summary", NULLPROTECT( rep->id ) );
     else
-      repMonth = FindMonthInArray( rep->monthlySummary, conf->nMonths, Y, M );
+      repMonth = FindMonthInArray( rep->monthlySummary, rep->nMonths, Y, M );
     if( repMonth!=NULL )
       AddSummaryRecords( destMonth, repMonth );
     }
