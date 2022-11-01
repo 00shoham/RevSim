@@ -173,6 +173,7 @@ int main( int argc, char** argv )
       }
     else
       {
+      Event( "Simulate calls for %04d-%02d-%02d", day->date.year, day->date.month, day->date.day );
       SimulateCalls( conf, dayNo, tSim );
       }
 

@@ -660,6 +660,8 @@ int ProcessKeywordPair( _CONFIG* config, char* variable, char* value )
     if( rt==NULL )
       Error( "Cannot find sales rep class %s", value );
     config->salesReps->class = rt;
+    config->salesReps->salaryOnly = rt->salaryOnly;
+
     return 0;
     }
 
@@ -719,8 +721,8 @@ int ProcessKeywordPair( _CONFIG* config, char* variable, char* value )
     if( config->salesReps==NULL )
       Error( "CONFIG: %s must follow SALES_REP", variable );
     double d = atof( value );
-    if( d<10000 || d>1000000 )
-      Error( "CONFIG: %s must be from 10000 to 1000000", variable );
+    if( d<1 || d>1000000 )
+      Error( "CONFIG: %s must be from 1 to 1000000", variable );
     config->salesReps->annualPay = d;
     config->salesReps->monthlyPay = d / 12.0;
     return 0;

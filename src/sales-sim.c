@@ -200,8 +200,14 @@ void CloseSingleSale( _CONFIG* conf,
         payTime += nDays * DAY_IN_SECONDS;
         if( TimeToMMDD( payTime, &payDate ) != 0 )
           Error( "Failed to convert time to date (XX)" );
+        if( repBeingPaid->workDays==NULL )
+          Notice( "customer car has no workdays" );
         payDay = FindSingleDay( &payDate, repBeingPaid->workDays, repBeingPaid->nWorkDays );
-        Notice( "Payday reassigned to %s (on day %d)", repBeingPaid->id, payDay - repBeingPaid->workDays );
+        if( payDay!=NULL )
+          Notice( "Payday reassigned to %s (on day %d)", repBeingPaid->id, payDay - repBeingPaid->workDays );
+        else
+          Notice( "Payday reassigned to %s (on day NULL - %04d-%02d-%02d)",
+                  repBeingPaid->id, payDate.year, payDate.month, payDate.day );
         }
       }
 
@@ -433,12 +439,26 @@ int SimulateInitialCall( _CONFIG* conf,
                   salesRep->id, newRep->id, y, m, d );
           return -2;
           }
+        else
+          {
+          Event( "Rep %s will start on this on %04d-%02d-%02d",
+                 newRep->id, thisDay->date.year, thisDay->date.month, thisDay->date.day );
+          /*
+          Event( "Rep %s starts on %04d-%02d-%02d and ends on %04d-%02d-%02d (%d)",
+                 newRep->id,
+                 newRep->workDays->date.year, newRep->workDays->date.month, newRep->workDays->date.day,
+                 (newRep->endOfWorkDays-1)->date.year, (newRep->endOfWorkDays-1)->date.month, (newRep->endOfWorkDays-1)->date.day,
+                 newRep->nWorkDays
+                 );
+          */
+          }
         salesRep = newRep;
         thisDay = FindSingleDay( &(thisDay->date), newRep->workDays, newRep->nWorkDays );
-        repLastDay = newRep->workDays + newRep->nWorkDays;
+        repLastDay = newRep->endOfWorkDays;
 
         while( thisDay < repLastDay )
-          if( thisDay->working==0 || thisDay->nCalls >= thisDay->maxCalls )
+          if( thisDay->working==0
+              || ( ( thisDay->maxCalls>0 ) && ( thisDay->nCalls >= thisDay->maxCalls ) ) )
             ++thisDay;
           else
             break;
@@ -446,8 +466,14 @@ int SimulateInitialCall( _CONFIG* conf,
         if( thisDay >= repLastDay )
           {
           thisDay = NULL;
-          Event( "Rep %s too busy on %04d-%02d-%02d - dropping the sales process",
-                 salesRep->id, y, m, d );
+          Event( "Rep %s has left on %04d-%02d-%02d (by %04d-%02d-%02d - %d days ago) - dropping the sales process",
+                 salesRep->id,
+                 (repLastDay-1)->date.year,
+                 (repLastDay-1)->date.month,
+                 (repLastDay-1)->date.day,
+                 y, m, d,
+                 repLastDay - thisDay
+                 );
           return 0;
           }
 
@@ -730,6 +756,10 @@ void SimulateCalls( _CONFIG* conf, int dayNo, time_t tSim )
       if( repDay->month )
         ++repDay->month->nCalls;
       _PRODUCT* product = s->class->products[s->productNum];
+      if( s->endOfWorkDays==NULL )
+        Event( "Rep %s has NULL end of work days", s->id );
+      else
+        Event( "Rep %s has %d work days", s->id, s->endOfWorkDays - s->workDays );
       int err = SimulateInitialCall( conf, s, repDay, s->endOfWorkDays, product );
       if( err ) /* above function returns non-zero if it couldn't find a free org to call into */
         break; /* nobody left to call today */

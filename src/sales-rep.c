@@ -70,8 +70,8 @@ int ValidateSingleSalesRepClass( _SALES_REP_CLASS* rt )
       }
     if( rt->nProducts!=0 || rt->products!=NULL )
       {
-      Warning( "salary only rep classes (%s) should have no products", rt->id );
-      return -4;
+      Warning( "salary only rep classes (%s) typically have no products", rt->id );
+      /* return -4; - maybe pre-salary as founder */
       }
     }
   else
@@ -388,7 +388,7 @@ int ValidateSingleSalesRep( _SALES_REP* r, _CONFIG* config )
   if( r->annualPay==0 )
     {
     Warning( "Rep %s has no annual salary!", r->id );
-    return -4;
+    /* can be legit return -4; */ 
     }
 
   if( r->monthlyPay==0 )
