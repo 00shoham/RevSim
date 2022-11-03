@@ -640,7 +640,7 @@ int ProcessKeywordPair( _CONFIG* config, char* variable, char* value )
 
     config->salesReps = NewSalesRep( value, config->salesReps );
     config->salesReps->seq = seq;
-    ++ config->nSalesReps;
+    ++ (config->nSalesReps);
     return 0;
     }
 
@@ -1085,7 +1085,7 @@ void ReadConfig( _CONFIG* config, char* filePath )
   char* endOfBuf = buf + sizeof(buf)-1;
   while( fgets(buf, sizeof(buf)-1, f )==buf )
     {
-    ++(config->parserLocation->iValue);
+    ++ (config->parserLocation->iValue);
     UpdateGlobalParsingLocation( config );
 
     char* ptr = TrimHead( buf );
@@ -1096,11 +1096,11 @@ void ReadConfig( _CONFIG* config, char* filePath )
       char* startingPoint = ptr + strlen(ptr) - 1;
       if( fgets(startingPoint, endOfBuf-startingPoint-1, f )!=startingPoint )
         {
-        ++(config->parserLocation->iValue);
+        ++ (config->parserLocation->iValue);
         UpdateGlobalParsingLocation( config );
         break;
         }
-      ++config->parserLocation->iValue;
+      ++ (config->parserLocation->iValue);
       UpdateGlobalParsingLocation( config );
       TrimTail( startingPoint );
       }
@@ -1160,7 +1160,7 @@ void ReadConfig( _CONFIG* config, char* filePath )
               fputs( " ", stdout );
               }
             fputs( includeFileName, stdout );
-            ++config->includeCounter;
+            ++ (config->includeCounter);
             }
 
           char* confPath = SanitizeFilename( CONFIGDIR, NULL, includeFileName, 0 );

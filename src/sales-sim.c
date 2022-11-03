@@ -118,7 +118,7 @@ void CloseSingleSale( _CONFIG* conf,
 
   // Notice( "thisDay starts as day %d of rep %s", thisDay - salesRep->workDays, salesRep->id );
 
-  ++ conf->nCustomerWins;
+  ++ (conf->nCustomerWins);
 
   int customer = 0;
   if( targetOrg!=NULL )
@@ -135,7 +135,7 @@ void CloseSingleSale( _CONFIG* conf,
   double initialRevenue = finalRevenue / pow( monthlyGrowthRate, (double)monthsToSteadyState );
 
   if( thisDay->month )
-    ++thisDay->month->nWins;
+    ++ (thisDay->month->nWins);
 
   Event( "Win at customer %d", customer );
   Event( ".. finalRevenue = %.1lf", finalRevenue );
@@ -158,7 +158,7 @@ void CloseSingleSale( _CONFIG* conf,
 
       if( thisDay->month )
         {
-        ++thisDay->month->nLosses;
+        ++ (thisDay->month->nLosses);
         }
 
       if( targetOrg != NULL )
@@ -169,10 +169,10 @@ void CloseSingleSale( _CONFIG* conf,
       }
     else
       {
-      ++ conf->nCustomerMonths;
+      ++ (conf->nCustomerMonths);
       ++ monthNo;
       if( thisDay->month )
-        ++ thisDay->month->nCustomers;
+        ++ (thisDay->month->nCustomers);
       }
 
     double actualRevenue = revenue;
@@ -329,7 +329,7 @@ void CloseSingleSale( _CONFIG* conf,
 
         if( thisDay->month )
           {
-          ++thisDay->month->nLosses;
+          ++ (thisDay->month->nLosses);
           }
 
         if( targetOrg != NULL )
@@ -341,10 +341,10 @@ void CloseSingleSale( _CONFIG* conf,
         }
       else
         {
-        ++ conf->nCustomerMonths;
+        ++ (conf->nCustomerMonths);
         ++ monthNo;
         if( thisDay->month )
-          ++ thisDay->month->nCustomers;
+          ++ (thisDay->month->nCustomers);
         }
 
       thisDay->dailySales = NewRevenueEvent( conf, thisDay->date, customer, conf->customerCare, monthNo, revenue, thisDay->dailySales );
@@ -406,9 +406,9 @@ int SimulateInitialCall( _CONFIG* conf,
     {
     if( stageNo>0 && thisDay<repLastDay ) /* if stageNo==0, caller to this function did that already */
       {
-      ++thisDay->nCalls;
+      ++ (thisDay->nCalls);
       if( thisDay->month )
-        ++thisDay->month->nCalls;
+        ++ (thisDay->month->nCalls);
       }
 
     _SALES_STAGE* stage = product->stageArray[ stageNo ];
@@ -421,7 +421,7 @@ int SimulateInitialCall( _CONFIG* conf,
                stage->id, newRep->id );
 
         if( thisDay->month )
-          ++thisDay->month->nTransfers;
+          ++ (thisDay->month->nTransfers);
 
         if( salesRep->handoffFee > 0 )
           {
@@ -497,14 +497,17 @@ int SimulateInitialCall( _CONFIG* conf,
         {
         if( callNum>0 && thisDay<repLastDay ) /* handled above if it's zero */
           {
-          ++thisDay->nCalls; /* make a call */
+          ++ (thisDay->nCalls); /* make a call */
           if( thisDay->month )
-            ++thisDay->month->nCalls; /* update the monthly summary data */
+            ++ (thisDay->month->nCalls); /* update the monthly summary data */
           }
         int nDaysToNextCall = (int)(RandN2( stage->connectRetryDaysAverage, stage->connectRetryDaysStandardDeviation ) + 0.5);
+        Event( "Next call attempt after %04d-%02d-%02d in %d days",
+               thisDay->date.year, thisDay->date.month, thisDay->date.day, nDaysToNextCall );
         thisDay += nDaysToNextCall;
         while( thisDay < repLastDay )
-          if( thisDay->working==0 || thisDay->nCalls >= thisDay->maxCalls )
+          if( thisDay->working==0
+              || ( ( thisDay->maxCalls>0 ) && ( thisDay->nCalls >= thisDay->maxCalls ) ) )
             ++thisDay;
           else
             break;
@@ -512,22 +515,28 @@ int SimulateInitialCall( _CONFIG* conf,
 
       /* too late! */
       if( thisDay >= repLastDay )
+        {
+        Event( "Rep %s is gone before sales stage %s - sales process terminated.",
+               salesRep->id, stage->id );
         return 0; /* next stage happens after this rep's last day - unlikely to hand off properly */
+        }
       }
 
     /* possibly lose the customer at this stage */
     if( PercentProbabilityEvent( stage->percentAttrition ) )
       {
-      Event( "Lost customer %s at stage %s (%d) by %s.", customerID, stage->id, stageNo, salesRep->id );
+      Event( "Lost prospect %s at stage %s (%d) by %s.", customerID, stage->id, stageNo, salesRep->id );
 
       if( thisDay->month ) /* update monthly stats */
-        ++thisDay->month->nRejections;
+        ++ (thisDay->month->nRejections);
 
       if( targetOrg!=NULL ) /* org won't be called for a cooling period */
         RejectedByOrg( conf, targetOrg, thisDay->t );
 
       return 0; /* failed - attrition at this stage of the sales process*/
       }
+    else
+      Event( "Prospect %s proceeds from stage %s (%d) by %s.", customerID, stage->id, stageNo, salesRep->id );
 
     /* did we win the customer?  if no more stages and we didn't lose, then yes! */
     if( stage->isTerminal )
@@ -553,17 +562,27 @@ int SimulateInitialCall( _CONFIG* conf,
 
     /* didn't win, didn't lose - move on to next stage then */
     nDaysToNextStage = (int)RandN2( stage->daysDelayAverage, stage->daysDelayStandardDeviation );
-    Event( "Sales stage %s complete.  Next stage in %d+ days", stage->id, nDaysToNextStage );
+    Event( "Sales stage %s complete on %04d-%02d-%02d.  Next stage in %d+ days",
+           stage->id,
+           thisDay->date.year, thisDay->date.month, thisDay->date.day,
+           nDaysToNextStage );
 
     /* increment thisDay to the time of the next sales stage - but
        note that it might fall on a weekend or holiday or vacation,
        or even a day where we're already simulated a full set of calls.. */
     thisDay += nDaysToNextStage;
     while( thisDay < repLastDay ) /* skip weekends and skip days where we already have a full schedule of calls */
-      if( thisDay->working==0 || thisDay->nCalls >= thisDay->maxCalls )
+      {
+      Event( "Testing %s availability on %04d-%02d-%02d (working=%d, nCalls=%d, maxCalls=%d)",
+             salesRep->id, thisDay->date.year, thisDay->date.month, thisDay->date.month,
+             thisDay->working, thisDay->nCalls, thisDay->maxCalls );
+             
+      if( thisDay->working==0
+          || ( ( thisDay->maxCalls>0 ) && ( thisDay->nCalls >= thisDay->maxCalls ) ) )
         ++thisDay;
       else
         break;
+      }
     
     if( thisDay >= repLastDay )
       {
@@ -751,10 +770,10 @@ void SimulateCalls( _CONFIG* conf, int dayNo, time_t tSim )
            s->id, repDay->maxCalls - repDay->nCalls, repDay->nCalls, repDay->date.year, repDay->date.month, repDay->date.day );
 
     /* repDay->nCalls starts >0 due to follow up from previous events */
-    for( ; repDay->nCalls < repDay->maxCalls; ++(repDay->nCalls) )
+    for( ; repDay->nCalls < repDay->maxCalls; ++ (repDay->nCalls) )
       { /* if selling multiple products, cycle through them */
       if( repDay->month )
-        ++repDay->month->nCalls;
+        ++ (repDay->month->nCalls);
       _PRODUCT* product = s->class->products[s->productNum];
       if( s->endOfWorkDays==NULL )
         Event( "Rep %s has NULL end of work days", s->id );

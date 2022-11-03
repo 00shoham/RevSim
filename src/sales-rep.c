@@ -165,7 +165,7 @@ void AddProductToRepClass( _SALES_REP_CLASS* rt, _PRODUCT* p )
     }
   else
     {
-    ++ rt->nProducts;
+    ++ (rt->nProducts);
     rt->products = (_PRODUCT**)realloc( rt->products, rt->nProducts * sizeof( _PRODUCT* ) );
     if( rt->products==NULL )
       Error( "Failed to reallocate array to %d products", rt->nProducts );
@@ -318,7 +318,7 @@ void AppendReplacementSalesRepInList( _CONFIG* config, _SALES_REP* r )
     newRep->monthlyPay = round( annualPay / 12.0 );
     
     /* add the new rep to the config */
-    ++ config->nSalesReps;
+    ++ (config->nSalesReps);
     _SALES_REP **sPtr;
     for( sPtr = &r->next;
          sPtr!=NULL && *(sPtr)!=NULL;

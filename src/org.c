@@ -15,7 +15,7 @@ void SaleToOrg( _CONFIG* conf, _ORG* o, time_t saleDate )
   o->saleDate = saleDate;
 
   // one less available to sell to
-  --conf->nAvailableOrgs;
+  -- (conf->nAvailableOrgs);
   }
 
 void RejectedByOrg( _CONFIG* conf, _ORG* o, time_t callDate )
@@ -52,7 +52,7 @@ void OrgAttrition( _CONFIG* conf, _ORG* o, time_t callDate )
   o->earliestLegalCall = callDate + conf->orgCoolingPeriodDays * DAY_IN_SECONDS;
 
   // number of available orgs incremented, but available date pushed out
-  ++conf->nAvailableOrgs;
+  ++ (conf->nAvailableOrgs);
   }
 
 _ORG* FindAvailableTargetOrg( _CONFIG* conf, time_t callTime )
