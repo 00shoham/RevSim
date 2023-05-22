@@ -399,6 +399,10 @@ int ValidateSingleSalesRep( _SALES_REP* r, _CONFIG* config )
     if( r->dailyCalls<1 )
       {
       Warning( "Rep %s has no steady state daily call volume!", r->id );
+      if( r->class == NULL )
+        Warning( "Rep %s has no class!", r->id );
+      else
+        Warning( "Class is %s, class->salaryOnly is %d", r->class->id, r->class->salaryOnly );
       return -6;
       }
     }
