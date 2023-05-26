@@ -1,7 +1,7 @@
 #ifndef _INCLUDE_ORG
 #define _INCLUDE_ORG
 
-#define MAX_MARKET_SIZE 50000
+#define MAX_MARKET_SIZE 250000
 
 typedef struct _org
   {

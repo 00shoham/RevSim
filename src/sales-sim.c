@@ -502,8 +502,13 @@ int SimulateInitialCall( _CONFIG* conf,
             ++ (thisDay->month->nCalls); /* update the monthly summary data */
           }
         int nDaysToNextCall = (int)(RandN2( stage->connectRetryDaysAverage, stage->connectRetryDaysStandardDeviation ) + 0.5);
-        Event( "Next call attempt after %04d-%02d-%02d in %d days",
-               thisDay->date.year, thisDay->date.month, thisDay->date.day, nDaysToNextCall );
+        if( thisDay==NULL )
+          Warning( "thisDay==NULL" );
+        else if( thisDay >= repLastDay )
+          /*Warning( "thisDay>=repLastDay" )*/;
+        else
+          Event( "Next call attempt after %04d-%02d-%02d in %d days",
+                 thisDay->date.year, thisDay->date.month, thisDay->date.day, nDaysToNextCall );
         thisDay += nDaysToNextCall;
         while( thisDay < repLastDay )
           if( thisDay->working==0
