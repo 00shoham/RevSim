@@ -90,7 +90,8 @@ void CloseSingleSale( _CONFIG* conf,
                       _ORG* targetOrg,
                       _SINGLE_DAY* repFirstDay,
                       _SINGLE_DAY* repLastDay,
-                      _PRODUCT* product )
+                      _PRODUCT* product,
+                      double overrideRevenue )
   {
   if( conf==NULL )
     return;
@@ -129,10 +130,26 @@ void CloseSingleSale( _CONFIG* conf,
     customer = conf->customerNumber;
     }
 
-  double finalRevenue = RandN2( product->averageMonthlyDealSize, product->dealSizeStandardDeviation );
-  int monthsToSteadyState = RandN2( product->averageMonthsToReachSteadyState, product->sdevMonthsToReachSteadyState );
-  double monthlyGrowthRate = 1.0 + product->monthlyGrowthRatePercent/100.0;
-  double initialRevenue = finalRevenue / pow( monthlyGrowthRate, (double)monthsToSteadyState );
+  /* Random if really simulating, fixed if the revenue was provided: */
+  double finalRevenue = -1;
+  int monthsToSteadyState = -1;
+  double monthlyGrowthRate = -1;
+  double initialRevenue = -1;
+
+  if( overrideRevenue>0 )
+    {
+    finalRevenue = overrideRevenue;
+    monthsToSteadyState = 0;
+    monthlyGrowthRate = 0;
+    initialRevenue = overrideRevenue; 
+    }
+  else
+    {
+    finalRevenue = RandN2( product->averageMonthlyDealSize, product->dealSizeStandardDeviation );
+    monthsToSteadyState = RandN2( product->averageMonthsToReachSteadyState, product->sdevMonthsToReachSteadyState );
+    monthlyGrowthRate = 1.0 + product->monthlyGrowthRatePercent/100.0;
+    initialRevenue = finalRevenue / pow( monthlyGrowthRate, (double)monthsToSteadyState );
+    }
 
   if( thisDay->month )
     ++ (thisDay->month->nWins);
@@ -158,7 +175,7 @@ void CloseSingleSale( _CONFIG* conf,
 
       if( thisDay->month )
         {
-        ++ (thisDay->month->nLosses);
+        ++ (thisDay->month->nLosses );
         }
 
       if( targetOrg != NULL )
@@ -556,7 +573,8 @@ int SimulateInitialCall( _CONFIG* conf,
                        targetOrg,
                        thisDay,
                        repLastDay,
-                       product );
+                       product,
+                       0 );
 
       return 0;
       }

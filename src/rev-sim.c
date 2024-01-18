@@ -111,6 +111,28 @@ int main( int argc, char** argv )
 
   double carryForwardCashBalance = 0;
 
+  /* Simulate sales to existing customers identified as initial revenue per product: */
+  _SINGLE_DAY* startDay = FindSingleDay( &(conf->simulationFirstDay), conf->baselineWorkDays, conf->nBaselineWorkDays );
+  if( startDay==NULL ) Error( "Failed to find _SINGLE_DAY for start of simulation" );
+
+  _SINGLE_DAY* endDay = FindSingleDay( &(conf->simulationEndDay), conf->baselineWorkDays, conf->nBaselineWorkDays );
+  if( endDay==NULL ) Error( "Failed to find _SINGLE_DAY for end of simulation" );
+
+  for( _PRODUCT* p = conf->products; p!=NULL; p=p->next )
+    {
+    if( p->initialMonthlyRevenue<=0 )
+      continue;
+    if( p->initialMonthlyCustomers<1 )
+      continue;
+    double avgRevenuePerCustomer = p->initialMonthlyRevenue
+                                 / (double)p->initialMonthlyCustomers;
+    for( int custNo = 0; custNo < p->initialMonthlyCustomers; ++custNo )
+      {
+      CloseSingleSale( conf, conf->customerCare, NULL,
+                       startDay, endDay, p, avgRevenuePerCustomer );
+      }
+    }
+
   for( time_t tSim = conf->simulationStart;
        dayNo < conf->simulationDurationDays
        && tSim <= conf->simulationEnd;
