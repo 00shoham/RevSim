@@ -469,6 +469,28 @@ int ProcessKeywordPair( _CONFIG* config, char* variable, char* value )
     return 0;
     }
 
+  if( strcasecmp( variable, "PRODUCT_INITIAL_MONTHLY_REVENUE" )==0 )
+    {
+    if( config->products==NULL )
+      Error( "CONFIG: %s must follow PRODUCT", variable );
+    double r = atof( value );
+    if( r<0 )
+      Error( "Initial monthly revenue for %s is negative?  Nope.", config->products->id );
+    config->products->initialMonthlyRevenue = r;
+    return 0;
+    }
+
+  if( strcasecmp( variable, "PRODUCT_INITIAL_MONTHLY_CUSTOMERS" )==0 )
+    {
+    if( config->products==NULL )
+      Error( "CONFIG: %s must follow PRODUCT", variable );
+    int n = atoi( value );
+    if( n<1 )
+      Error( "Initial monthly number of customers for %s must be at least one...", config->products->id );
+    config->products->initialMonthlyCustomers = n;
+    return 0;
+    }
+
   if( strcasecmp( variable, "REP_CLASS" )==0 )
     {
     config->salesRepClasses = NewSalesRepClass( value, config->salesRepClasses );

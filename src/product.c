@@ -90,6 +90,18 @@ int ValidateSingleProduct( _PRODUCT* p )
     return -8;
     }
 
+  if( p->initialMonthlyRevenue>0 && p->initialMonthlyCustomers<1 )
+    {
+    Warning( "Cannot have initial revenue over no customers in %s", p->id );
+    return -9;
+    }
+
+  if( p->initialMonthlyRevenue<=0 && p->initialMonthlyCustomers>0 )
+    {
+    Warning( "Cannot have initial customers but no revenue in %s", p->id );
+    return -10;
+    }
+
   return 0;
   }
 
@@ -115,6 +127,12 @@ void PrintProduct( FILE* f, _PRODUCT* p )
     fprintf( f, "PRODUCT_MONTHS_TIL_STEADY_STATE_SDEV=%.1lf\n", p->sdevMonthsToReachSteadyState );
   if( p->probabilityOfCustomerAttritionPerMonth >0 )
     fprintf( f, "PRODUCT_ATTRITION_PERCENT_PER_MONTH=%.1lf\n", p->probabilityOfCustomerAttritionPerMonth );
+
+  if( p->initialMonthlyRevenue>0 && p->initialMonthlyCustomers>1 )
+    {
+    fprintf( f, "PRODUCT_INITIAL_MONTHLY_REVENUE=%.1lf\n", p->initialMonthlyRevenue );
+    fprintf( f, "PRODUCT_INITIAL_MONTHLY_CUSTOMERS=%d\n", p->initialMonthlyCustomers );
+    }
 
   fprintf( f, "\n" );
   }
