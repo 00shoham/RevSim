@@ -115,7 +115,11 @@ int main( int argc, char** argv )
   _SINGLE_DAY* startDay = FindSingleDay( &(conf->simulationFirstDay), conf->baselineWorkDays, conf->nBaselineWorkDays );
   if( startDay==NULL ) Error( "Failed to find _SINGLE_DAY for start of simulation" );
 
-  _SINGLE_DAY* endDay = FindSingleDay( &(conf->simulationEndDay), conf->baselineWorkDays, conf->nBaselineWorkDays );
+  time_t lastGoodDayInSimulation = conf->simulationEnd - 24 * 60 * 60;
+  _MMDD lastGoodDay = {0};
+  if( TimeToMMDD( lastGoodDayInSimulation, &lastGoodDay )!=0 )
+    Error( "Failed to convert last good day to MMDD" );
+  _SINGLE_DAY* endDay = FindSingleDay( &lastGoodDay, conf->baselineWorkDays, conf->nBaselineWorkDays );
   if( endDay==NULL ) Error( "Failed to find _SINGLE_DAY for end of simulation" );
 
   for( _PRODUCT* p = conf->products; p!=NULL; p=p->next )
@@ -129,7 +133,8 @@ int main( int argc, char** argv )
     for( int custNo = 0; custNo < p->initialMonthlyCustomers; ++custNo )
       {
       CloseSingleSale( conf, conf->customerCare, NULL,
-                       startDay, endDay, p, avgRevenuePerCustomer );
+                       startDay, endDay,
+                       p, avgRevenuePerCustomer );
       }
     }
 
