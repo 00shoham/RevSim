@@ -97,7 +97,7 @@ void CloseSingleSale( _CONFIG* conf,
     return;
   if( salesRep==NULL )
     return;
-  if( salesRep->class==NULL )
+  if( salesRep!=conf->customerCare && salesRep->class==NULL )
     return;
   if( repFirstDay==NULL )
     return;
@@ -107,12 +107,11 @@ void CloseSingleSale( _CONFIG* conf,
     return;
   /* note that targetOrg is permitted to be NULL */
 
-  /*
-  Notice( "CloseSingleSale( rep=%s, firstDay=%04d-%02d-%02d, lastDay(-1)=%04d-%02d-%02d",
-          salesRep->id,
-          repFirstDay->date.year, repFirstDay->date.month, repFirstDay->date.day,
-          (repLastDay-1)->date.year, (repLastDay-1)->date.month, (repLastDay-1)->date.day );
-  */
+  if( salesRep == conf->customerCare )
+    Notice( "CloseSingleSale( rep=%s, firstDay=%04d-%02d-%02d, lastDay(-1)=%04d-%02d-%02d",
+            salesRep->id,
+            repFirstDay->date.year, repFirstDay->date.month, repFirstDay->date.day,
+            (repLastDay-1)->date.year, (repLastDay-1)->date.month, (repLastDay-1)->date.day );
 
   _SINGLE_DAY* thisDay = repFirstDay;
   _SINGLE_DAY* lastRevenueDay = NULL;
@@ -231,7 +230,9 @@ void CloseSingleSale( _CONFIG* conf,
     // Notice( "repBeingPaid=%s, salesRep=%s Q=%d", repBeingPaid->id, salesRep->id, payDay >= repLastDay );
     if( ( repBeingPaid==salesRep && payDay >= repLastDay ) /* rep gone */
         /* || payDay->date.year==0 also rep gone (weird state) */
-        || ( salesRep->class->commissionMonths>0 && monthNo >= salesRep->class->commissionMonths ) /* account moves to CC pool */ )
+        || ( salesRep->class!=NULL
+             && salesRep->class->commissionMonths>0
+             && monthNo >= salesRep->class->commissionMonths ) /* account moves to CC pool */ )
       { /* rep is gone, company still get paid though */
       Event( "Payday beyond %s last day or past commission window", salesRep->id );
       repBeingPaid = conf->customerCare;
@@ -272,7 +273,8 @@ void CloseSingleSale( _CONFIG* conf,
 
       payDay->dailySales = NewRevenueEvent( conf, payDay->date, customer, repBeingPaid, monthNo, actualRevenue, payDay->dailySales );
 
-      if( repBeingPaid == salesRep )
+      if( repBeingPaid == salesRep
+          && salesRep->class!=NULL )
         {
         payDay->fees = NewPayEvent( conf, payDay->date, salesRep, pt_commission, revenue * salesRep->class->commission / 100.0, payDay->fees );
         Event( ".. %04d-%02d-%02d Rep %s gets paid %.1lf for %.1lf in sales to customer %d (month %d of deal)",

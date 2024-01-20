@@ -130,6 +130,8 @@ int main( int argc, char** argv )
       continue;
     double avgRevenuePerCustomer = p->initialMonthlyRevenue
                                  / (double)p->initialMonthlyCustomers;
+    printf( "Calculating %s revenue from initial customers ($%.1lf/customer, %d customers)\n",
+            p->id, avgRevenuePerCustomer, p->initialMonthlyCustomers );
     for( int custNo = 0; custNo < p->initialMonthlyCustomers; ++custNo )
       {
       CloseSingleSale( conf, conf->customerCare, NULL,
