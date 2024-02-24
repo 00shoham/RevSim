@@ -3,9 +3,6 @@
 
 #include "utils.h"
 
-#define MIN(A,B) (((A)<(B))?(A):(B))
-#define MAX(A,B) (((A)>(B))?(A):(B))
-
 #define SafeCalloc( N, S, W ) calloc( N, S );
 
 struct _config;
