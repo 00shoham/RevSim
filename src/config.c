@@ -566,8 +566,8 @@ int ProcessKeywordPair( _CONFIG* config, char* variable, char* value )
     if( config->salesRepClasses==NULL )
       Error( "CONFIG: %s must follow REP_CLASS", variable );
     double d = atof( value );
-    if( d<1 || d>100 )
-      Error( "CONFIG: %s must be from 1 to 100", variable );
+    if( d<1 || d>1000 )
+      Error( "CONFIG: %s must be from 1 to 1000", variable );
     config->salesRepClasses->averageEmploymentMonths = d;
     return 0;
     }
@@ -743,8 +743,10 @@ int ProcessKeywordPair( _CONFIG* config, char* variable, char* value )
     if( config->salesReps==NULL )
       Error( "CONFIG: %s must follow SALES_REP", variable );
     double d = atof( value );
-    if( d<1 || d>1000000 )
-      Error( "CONFIG: %s must be from 1 to 1000000", variable );
+    if( d>1000000 )
+      Error( "CONFIG: %s cannot exceed 1000000", variable );
+    if( d<1 )
+      Warning( "CONFIG: %s == %s --- unpaid worker?", variable, value );
     config->salesReps->annualPay = d;
     config->salesReps->monthlyPay = d / 12.0;
     return 0;
