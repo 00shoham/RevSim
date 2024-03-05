@@ -293,7 +293,7 @@ int ProcessKeywordPair( _CONFIG* config, char* variable, char* value )
     return 0;
     }
 
-  if( strcasecmp( variable, "STAGE_DAYS_AVERAGE" )==0 )
+  if( strcasecmp( variable, "STAGE_DAYS_AVG" )==0 )
     {
     if( config->stages==NULL )
       Error( "CONFIG: %s must follow STAGE", variable );
@@ -304,7 +304,7 @@ int ProcessKeywordPair( _CONFIG* config, char* variable, char* value )
     return 0;
     }
 
-  if( strcasecmp( variable, "STAGE_DAYS_STANDARD_DEVIATION" )==0 )
+  if( strcasecmp( variable, "STAGE_DAYS_SDEV" )==0 )
     {
     if( config->stages==NULL )
       Error( "CONFIG: %s must follow STAGE", variable );
@@ -797,7 +797,7 @@ int ProcessKeywordPair( _CONFIG* config, char* variable, char* value )
     return 0;
     }
 
-  if( strcasecmp( variable, "COLLECTIONS_DELAY_CALENDAR_DAYS_AVERAGE" )==0 )
+  if( strcasecmp( variable, "COLLECTIONS_DELAY_CALENDAR_DAYS_AVG" )==0 )
     {
     double p = atof( value );
     if( p<0 || p>365 )
@@ -1027,7 +1027,7 @@ void PrintConfig( FILE* f, _CONFIG* config )
     fprintf( f, "PAYMENT_PROCESSING_PERCENT=%.1lf\n", config->percentageForPaymentProcessing );
 
   if( config->averageCollectionsDelayDays > 0 )
-    fprintf( f, "COLLECTIONS_DELAY_CALENDAR_DAYS_AVERAGE=%.1lf\n", config->averageCollectionsDelayDays );
+    fprintf( f, "COLLECTIONS_DELAY_CALENDAR_DAYS_AVG=%.1lf\n", config->averageCollectionsDelayDays );
 
   if( config->sdevCollectionsDelayDays > 0 )
     fprintf( f, "COLLECTIONS_DELAY_CALENDAR_DAYS_SDEV=%.1lf\n", config->sdevCollectionsDelayDays );
@@ -1318,10 +1318,10 @@ void ValidateConfig( _CONFIG* config )
       && config->averageCollectionsDelayDays!=0 )
       || ( config->sdevCollectionsDelayDays!=0 
            && config->averageCollectionsDelayDays==0 ) )
-    Error( "If you specify one of COLLECTIONS_DELAY_CALENDAR_DAYS_AVERAGE, COLLECTIONS_DELAY_CALENDAR_DAYS_SDEV, you must specify both" );
+    Error( "If you specify one of COLLECTIONS_DELAY_CALENDAR_DAYS_AVG, COLLECTIONS_DELAY_CALENDAR_DAYS_SDEV, you must specify both" );
 
   if( config->sdevCollectionsDelayDays > config->averageCollectionsDelayDays )
-    Error( "COLLECTIONS_DELAY_CALENDAR_DAYS_AVERAGE must be greater than COLLECTIONS_DELAY_CALENDAR_DAYS_SDEV" );
+    Error( "COLLECTIONS_DELAY_CALENDAR_DAYS_AVG must be greater than COLLECTIONS_DELAY_CALENDAR_DAYS_SDEV" );
 
   /* create the customer care department - modeled as a 'magical' sales rep */
   if( config->customerCare==NULL )

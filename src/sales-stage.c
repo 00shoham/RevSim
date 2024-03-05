@@ -92,9 +92,9 @@ void PrintSalesStage( FILE* f, _SALES_STAGE* s )
   if( s->predecessor!=NULL && NOTEMPTY( s->predecessor->id ) )
     fprintf( f, "STAGE_FOLLOWS=%s\n", s->predecessor->id );
   if( s->daysDelayAverage > 0 )
-    fprintf( f, "STAGE_DAYS_AVERAGE=%.1lf\n", s->daysDelayAverage  );
+    fprintf( f, "STAGE_DAYS_AVG=%.1lf\n", s->daysDelayAverage  );
   if( s->daysDelayStandardDeviation > 0 )
-    fprintf( f, "STAGE_DAYS_STANDARD_DEVIATION=%.1lf\n", s->daysDelayStandardDeviation );
+    fprintf( f, "STAGE_DAYS_SDEV=%.1lf\n", s->daysDelayStandardDeviation );
   if( s->percentAttrition > 0 )
     fprintf( f, "STAGE_ATTRITION_PERCENT=%.1lf\n", s->percentAttrition );
   if( s->connectAttemptsAverage > 0 )
