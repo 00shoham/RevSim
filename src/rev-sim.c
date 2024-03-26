@@ -74,7 +74,6 @@ int main( int argc, char** argv )
 
   printf( "Working out a baseline of work days vs. weekends and stat holidays.\n" );
 
-  CalculateBaselineWorkingDays( conf );
   /* PrintAvailability( out, conf ); */
 
   printf( "Assigning vacation days, creating random attrition/replacement and paying salaries.\n" );
