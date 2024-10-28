@@ -12,6 +12,9 @@ typedef struct _product
   double sdevMonthsToReachSteadyState;
   double probabilityOfCustomerAttritionPerMonth;
 
+  double initialMonthlyRevenue;
+  int initialMonthlyCustomers;
+
   int nSalesStages;
   _SALES_STAGE** stageArray;
   struct _product* next;

@@ -1,3 +1,8 @@
+* Simulate initial revenue per product.
+
+* Add support for launch date for products, so we can simulate future
+  product launches (not at simulation start time/date).
+
 * Check that RandomRepFromClassList does not fail if first attempt
   is too busy
 

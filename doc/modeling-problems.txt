@@ -29,8 +29,8 @@ The following processes can be modeled:
   STAGE
   STAGE_NAME
   STAGE_FOLLOWS
-  STAGE_DAYS_AVERAGE
-  STAGE_DAYS_STANDARD_DEVIATION
+  STAGE_DAYS_AVG
+  STAGE_DAYS_SDEV
   STAGE_REBOOK_PERCENT
   STAGE_ATTRITION_PERCENT
 
@@ -65,6 +65,16 @@ The following processes can be modeled:
   that product) together with:
 
   PRODUCT_FIRST_SALE_STAGE
+
+* If the simulation start date is after a product launch has already
+  happened, then it makes sense to tell the simulator how much revenue
+  over how many customers is already happening.  This is done by
+  specifying, per-product:
+
+  PRODUCT_INITIAL_MONTHLY_REVENUE (total value)
+  PRODUCT_INITIAL_MONTHLY_CUSTOMERS (how many of them)
+
+  The simulator will apply attrition metrics to whittle this down over time.
 
 * Sales reps don't just magically start out productive.  Their productivity,
   modeled as daily call volume, grows over time.  How long it takes a rep
@@ -158,7 +168,7 @@ The following processes can be modeled:
   See parameters:
 
   PAYMENT_PROCESSING_PERCENT
-  COLLECTIONS_DELAY_CALENDAR_DAYS_AVERAGE
+  COLLECTIONS_DELAY_CALENDAR_DAYS_AVG
   COLLECTIONS_DELAY_CALENDAR_DAYS_SDEV
 
 * In B2B businesses in particular, there may be a finite set of prospective

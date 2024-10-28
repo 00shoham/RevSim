@@ -11,6 +11,7 @@ int main( int argc, char** argv )
   char* eventsFile = NULL;
   char* counterFile = NULL;
   char* cashFile = NULL;
+  int confTest = 0;
 
   RandomSeed();
 
@@ -28,9 +29,11 @@ int main( int argc, char** argv )
       counterFile = argv[++i];
     else if( strcmp( argv[i], "-s" )==0 && i+1<argc )
       cashFile = argv[++i];
+    else if( strcmp( argv[i], "-conftest" )==0 )
+      confTest = 1;
     else if( strcmp( argv[i], "-h" )==0 )
       {
-      printf("USAGE: %s [-c configFile] [-d configDir] [-o outFile] [-e eventsFile] [-s cashFile]\n", argv[0] );
+      printf("USAGE: %s [-c configFile] [-d configDir] [-o outFile] [-e eventsFile] [-s cashFile] [-conftest]\n", argv[0] );
       exit(0);
       }
     else
@@ -44,7 +47,7 @@ int main( int argc, char** argv )
   _CONFIG* conf = (_CONFIG*)calloc( 1, sizeof( _CONFIG ) );
   if( conf==NULL ) Error( "Cannot allocate CONFIG object" );
 
-  printf( "Reading configuration file.\n" );
+  /* printf( "Reading configuration file.\n" ); */
 
   SetDefaults( conf );
   ReadConfig( conf, confPath );
@@ -52,6 +55,12 @@ int main( int argc, char** argv )
 
   free( confPath );
   confPath = NULL;
+
+  if( confTest )
+    {
+    printf( "Configuration OK.\n" );
+    exit(0);
+    }
 
   FILE* out = stdout;
   if( NOTEMPTY( outFile ) && strcmp( outFile, "-" )!=0 )
@@ -74,7 +83,6 @@ int main( int argc, char** argv )
 
   printf( "Working out a baseline of work days vs. weekends and stat holidays.\n" );
 
-  CalculateBaselineWorkingDays( conf );
   /* PrintAvailability( out, conf ); */
 
   printf( "Assigning vacation days, creating random attrition/replacement and paying salaries.\n" );
@@ -110,6 +118,35 @@ int main( int argc, char** argv )
   printf( "Stepping through the timeline and simulating calls.\n" );
 
   double carryForwardCashBalance = 0;
+
+  /* Simulate sales to existing customers identified as initial revenue per product: */
+  _SINGLE_DAY* startDay = FindSingleDay( &(conf->simulationFirstDay), conf->baselineWorkDays, conf->nBaselineWorkDays );
+  if( startDay==NULL ) Error( "Failed to find _SINGLE_DAY for start of simulation" );
+
+  time_t lastGoodDayInSimulation = conf->simulationEnd - 24 * 60 * 60;
+  _MMDD lastGoodDay = {0};
+  if( TimeToMMDD( lastGoodDayInSimulation, &lastGoodDay )!=0 )
+    Error( "Failed to convert last good day to MMDD" );
+  _SINGLE_DAY* endDay = FindSingleDay( &lastGoodDay, conf->baselineWorkDays, conf->nBaselineWorkDays );
+  if( endDay==NULL ) Error( "Failed to find _SINGLE_DAY for end of simulation" );
+
+  for( _PRODUCT* p = conf->products; p!=NULL; p=p->next )
+    {
+    if( p->initialMonthlyRevenue<=0 )
+      continue;
+    if( p->initialMonthlyCustomers<1 )
+      continue;
+    double avgRevenuePerCustomer = p->initialMonthlyRevenue
+                                 / (double)p->initialMonthlyCustomers;
+    printf( "Calculating %s revenue from initial customers ($%.1lf/customer, %d customers)\n",
+            p->id, avgRevenuePerCustomer, p->initialMonthlyCustomers );
+    for( int custNo = 0; custNo < p->initialMonthlyCustomers; ++custNo )
+      {
+      CloseSingleSale( conf, conf->customerCare, NULL,
+                       startDay, endDay,
+                       p, avgRevenuePerCustomer );
+      }
+    }
 
   for( time_t tSim = conf->simulationStart;
        dayNo < conf->simulationDurationDays

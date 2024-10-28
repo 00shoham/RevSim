@@ -293,7 +293,7 @@ int ProcessKeywordPair( _CONFIG* config, char* variable, char* value )
     return 0;
     }
 
-  if( strcasecmp( variable, "STAGE_DAYS_AVERAGE" )==0 )
+  if( strcasecmp( variable, "STAGE_DAYS_AVG" )==0 )
     {
     if( config->stages==NULL )
       Error( "CONFIG: %s must follow STAGE", variable );
@@ -304,7 +304,7 @@ int ProcessKeywordPair( _CONFIG* config, char* variable, char* value )
     return 0;
     }
 
-  if( strcasecmp( variable, "STAGE_DAYS_STANDARD_DEVIATION" )==0 )
+  if( strcasecmp( variable, "STAGE_DAYS_SDEV" )==0 )
     {
     if( config->stages==NULL )
       Error( "CONFIG: %s must follow STAGE", variable );
@@ -466,6 +466,28 @@ int ProcessKeywordPair( _CONFIG* config, char* variable, char* value )
       Error( "Empty sales stage array?? [%s]", value );
     config->products->nSalesStages = nStages;
     config->products->stageArray = stageArray;
+    return 0;
+    }
+
+  if( strcasecmp( variable, "PRODUCT_INITIAL_MONTHLY_REVENUE" )==0 )
+    {
+    if( config->products==NULL )
+      Error( "CONFIG: %s must follow PRODUCT", variable );
+    double r = atof( value );
+    if( r<0 )
+      Error( "Initial monthly revenue for %s is negative?  Nope.", config->products->id );
+    config->products->initialMonthlyRevenue = r;
+    return 0;
+    }
+
+  if( strcasecmp( variable, "PRODUCT_INITIAL_MONTHLY_CUSTOMERS" )==0 )
+    {
+    if( config->products==NULL )
+      Error( "CONFIG: %s must follow PRODUCT", variable );
+    int n = atoi( value );
+    if( n<1 )
+      Error( "Initial monthly number of customers for %s must be at least one...", config->products->id );
+    config->products->initialMonthlyCustomers = n;
     return 0;
     }
 
@@ -689,7 +711,16 @@ int ProcessKeywordPair( _CONFIG* config, char* variable, char* value )
     if( config->salesReps==NULL )
       Error( "CONFIG: %s must follow SALES_REP", variable );
     if( strcasecmp( value, "end-of-sim" )==0 )
+      {
       config->salesReps->lastDay = config->simulationEndDay;
+      /*
+      Notice( "rep %s has last date end-of-sim which is %04d-%02d-%02d",
+              config->salesReps->id,
+              config->salesReps->lastDay.year,
+              config->salesReps->lastDay.month,
+              config->salesReps->lastDay.day );
+      */
+      }
     else if( strcasecmp( value, "random" )==0 )
       {
       _SALES_REP* r = config->salesReps;
@@ -721,8 +752,10 @@ int ProcessKeywordPair( _CONFIG* config, char* variable, char* value )
     if( config->salesReps==NULL )
       Error( "CONFIG: %s must follow SALES_REP", variable );
     double d = atof( value );
-    if( d<1 || d>1000000 )
-      Error( "CONFIG: %s must be from 1 to 1000000", variable );
+    if( d>1000000 )
+      Error( "CONFIG: %s cannot exceed 1000000", variable );
+    if( d<1 )
+      Warning( "CONFIG: %s == %s --- unpaid worker?", variable, value );
     config->salesReps->annualPay = d;
     config->salesReps->monthlyPay = d / 12.0;
     return 0;
@@ -773,7 +806,7 @@ int ProcessKeywordPair( _CONFIG* config, char* variable, char* value )
     return 0;
     }
 
-  if( strcasecmp( variable, "COLLECTIONS_DELAY_CALENDAR_DAYS_AVERAGE" )==0 )
+  if( strcasecmp( variable, "COLLECTIONS_DELAY_CALENDAR_DAYS_AVG" )==0 )
     {
     double p = atof( value );
     if( p<0 || p>365 )
@@ -1003,7 +1036,7 @@ void PrintConfig( FILE* f, _CONFIG* config )
     fprintf( f, "PAYMENT_PROCESSING_PERCENT=%.1lf\n", config->percentageForPaymentProcessing );
 
   if( config->averageCollectionsDelayDays > 0 )
-    fprintf( f, "COLLECTIONS_DELAY_CALENDAR_DAYS_AVERAGE=%.1lf\n", config->averageCollectionsDelayDays );
+    fprintf( f, "COLLECTIONS_DELAY_CALENDAR_DAYS_AVG=%.1lf\n", config->averageCollectionsDelayDays );
 
   if( config->sdevCollectionsDelayDays > 0 )
     fprintf( f, "COLLECTIONS_DELAY_CALENDAR_DAYS_SDEV=%.1lf\n", config->sdevCollectionsDelayDays );
@@ -1290,14 +1323,9 @@ void ValidateConfig( _CONFIG* config )
   if( config==NULL )
     Error( "Cannot validate a NULL configuration" );
 
-  if( ( config->sdevCollectionsDelayDays==0 
-      && config->averageCollectionsDelayDays!=0 )
-      || ( config->sdevCollectionsDelayDays!=0 
-           && config->averageCollectionsDelayDays==0 ) )
-    Error( "If you specify one of COLLECTIONS_DELAY_CALENDAR_DAYS_AVERAGE, COLLECTIONS_DELAY_CALENDAR_DAYS_SDEV, you must specify both" );
-
-  if( config->sdevCollectionsDelayDays > config->averageCollectionsDelayDays )
-    Error( "COLLECTIONS_DELAY_CALENDAR_DAYS_AVERAGE must be greater than COLLECTIONS_DELAY_CALENDAR_DAYS_SDEV" );
+  /* avoid doing this twice */
+  if( config->baselineWorkDays==NULL )
+    CalculateBaselineWorkingDays( config );
 
   /* create the customer care department - modeled as a 'magical' sales rep */
   if( config->customerCare==NULL )
@@ -1312,6 +1340,40 @@ void ValidateConfig( _CONFIG* config )
     config->customerCare->monthlyPay = 0;
     config->customerCare->dailyCalls = 0;
     }
+
+  if( EmptyMMDD( &(config->simulationFirstDay) )==0 )
+    Error( "Simulation must have a FIRST_DAY (%04d-%02d-%02d)",
+           config->simulationFirstDay.year,
+           config->simulationFirstDay.month,
+           config->simulationFirstDay.day );
+  if( config->simulationDurationDays<=0 )
+    Error( "Simulation must have a DURATION" );
+  if( EmptyMMDD( &(config->simulationEndDay) )==0 )
+    Error( "Simulation must have a FIRST_DAY and DURATION" );
+  if( config->holidays==NULL )
+    Error( "Simulation must specify holidays (statutory non-work days)" );
+  if( config->vacations==NULL )
+    Error( "Simulation must specify vacations (classes of time off given to people)" );
+  if( config->nBaselineWorkDays<=0 || config->baselineWorkDays==NULL )
+    Error( "Something went wrong calculating the number of baseline work days (%d:%p)",
+           config->nBaselineWorkDays, config->baselineWorkDays );
+  if( config->stages==NULL )
+    Error( "Simulation must specify at least one sales STAGE" );
+  if( config->products==NULL )
+    Error( "Simulation must specify at least one sales PRODUCT" );
+  if( config->salesReps==NULL )
+    Error( "Simulation must specify at least one sales SALES_REP" );
+  if( config->customerCare==NULL )
+    Error( "SOmething went wrong - there is no CUSTOMER_CARE built-in sales rep" );
+
+  if( ( config->sdevCollectionsDelayDays==0 
+      && config->averageCollectionsDelayDays!=0 )
+      || ( config->sdevCollectionsDelayDays!=0 
+           && config->averageCollectionsDelayDays==0 ) )
+    Error( "If you specify one of COLLECTIONS_DELAY_CALENDAR_DAYS_AVG, COLLECTIONS_DELAY_CALENDAR_DAYS_SDEV, you must specify both" );
+
+  if( config->sdevCollectionsDelayDays > config->averageCollectionsDelayDays )
+    Error( "COLLECTIONS_DELAY_CALENDAR_DAYS_AVG must be greater than COLLECTIONS_DELAY_CALENDAR_DAYS_SDEV" );
 
   for( _HOLIDAY* h = config->holidays; h!=NULL; h=h->next )
     {
@@ -1375,7 +1437,7 @@ void ValidateConfig( _CONFIG* config )
 
   if( ( config->marketSize!=0 && config->orgCoolingPeriodDays==0 )
       || ( config->marketSize==0 && config->orgCoolingPeriodDays!=0 ) )
-    Error( "MARKET_SIZE and ORG_COOLING_PERIOD_DAYS must be specified together" );
+    Error( "If either MARKET_SIZE or ORG_COOLING_PERIOD_DAYS is specified, the other must also be set." );
 
   if( config->marketSize > 0 )
     {
