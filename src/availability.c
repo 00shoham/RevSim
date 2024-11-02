@@ -1,7 +1,9 @@
 #include "base.h"
 
+/* be sure to allocate monthly summary data before calling this */
 int CalculateBaselineWorkingDays( _CONFIG* config )
   {
+  /* printf( "CalculateBaselineWorkingDays()\n" ); */
   if( config==NULL )
     {
     Warning( "CalculateBaselineWorkingDays - no config" );
@@ -30,24 +32,30 @@ int CalculateBaselineWorkingDays( _CONFIG* config )
   _SINGLE_DAY* d = config->baselineWorkDays;
 
   _MONTHLY_SUMMARY* month = config->monthlySummary;
+  /* printf( "CalculateBaselineWorkingDays() - initial month is %p\n", month ); */
   int nWorkDaysPerYear = 0;
   for( int i=0; i<nDays; ++i )
     {
+    /* printf( "CalculateBaselineWorkingDays() - day %d\n", i ); */
     if( TimeToMMDD( t, &(d->date) )!=0 )
       Error( "Failed to convert time %ld to MMDD", (int)t );
     if( month!=NULL )
       {
+      /* printf( "CalculateBaselineWorkingDays() - non-NULL month\n" ); */
       if( d->date.day==1 )
         {
+        /* printf( "CalculateBaselineWorkingDays() - day is 1\n" ); */
         if( d->date.year==month->monthStart.year
             && d->date.month==month->monthStart.month
             && d->date.day==month->monthStart.day )
           {
           d->month = month;
+          /* printf( "(A) Linking date %04d-%02d-%02d to month %04d-%02d\n", d->date.year, d->date.month, d->date.day, month->monthStart.year, month->monthStart.month ); */
           }
         else
           {
           ++month;
+          /* printf( "CalculateBaselineWorkingDays() - incremented month\n" ); */
           if( month >= config->monthlySummary + config->nMonths )
             Error( "Rolled off the end of the global month-summary array" );
 
@@ -56,6 +64,7 @@ int CalculateBaselineWorkingDays( _CONFIG* config )
               && d->date.day==month->monthStart.day )
             {
             d->month = month;
+            /* printf( "(B) Linking date %04d-%02d-%02d to month %04d-%02d\n", d->date.year, d->date.month, d->date.day, month->monthStart.year, month->monthStart.month ); */
             }
           else
             Warning( "Cannot find/assign global month-summary for date %04d-%02d-%02d",
@@ -259,6 +268,7 @@ void InitializeMonthlySummaryArray( char* subject,
   if( nMonths<1 )
     Error( "%s does not have any work months", subject );
   *nMonthsPtr = nMonths;
+  printf( "Setting nMonths for %s to %d\n", subject, nMonths );
 
   ms = (_MONTHLY_SUMMARY*)SafeCalloc( nMonths, sizeof( _MONTHLY_SUMMARY ), "Monthly summary array" );
   *msPtr = ms;

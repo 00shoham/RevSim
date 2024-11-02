@@ -54,9 +54,16 @@ void FreeConfig( _CONFIG* config )
     config->list = NULL;
     }
 
-
   if( config->monthlySummary!=NULL )
+    {
+    for( int i=0; i<config->nMonths; ++i )
+      {
+      _MONTHLY_SUMMARY* ms = config->monthlySummary + i;
+      if( ms->units != NULL )
+        FreeMonthlyUnitsList( ms->units );
+      }
     FREE( config->monthlySummary );
+    }
 
   FreeHoliday( config->holidays );
   config->holidays = NULL;
@@ -1407,6 +1414,16 @@ void ValidateConfig( _CONFIG* config )
   if( config==NULL )
     Error( "Cannot validate a NULL configuration" );
 
+  /* QQQ new location */
+  printf( "Initializing monthly summary array for the config as a whole.\n" );
+  InitializeMonthlySummaryArray( "Simulation",
+                                 &(config->monthlySummary),
+                                 &(config->nMonths),
+                                 NULL,
+                                 0,
+                                 &(config->simulationFirstDay),
+                                 &(config->simulationEndDay) );
+
   /* avoid doing this twice */
   if( config->baselineWorkDays==NULL )
     CalculateBaselineWorkingDays( config );
@@ -1508,9 +1525,13 @@ void ValidateConfig( _CONFIG* config )
       Error( "Sales rep does not validate - %s", r->id );
     }
 
+  /* why??
   if( config->monthlySummary!=NULL )
     FREE( config->monthlySummary );
+  */
 
+  /* QQQ old location
+  printf( "Initializing monthly summary array for the config as a whole.\n" );
   InitializeMonthlySummaryArray( "Simulation",
                                  &(config->monthlySummary),
                                  &(config->nMonths),
@@ -1518,6 +1539,7 @@ void ValidateConfig( _CONFIG* config )
                                  0,
                                  &(config->simulationFirstDay),
                                  &(config->simulationEndDay) );
+  */
 
   if( ( config->marketSize!=0 && config->orgCoolingPeriodDays==0 )
       || ( config->marketSize==0 && config->orgCoolingPeriodDays!=0 ) )

@@ -10,6 +10,7 @@ int main( int argc, char** argv )
   char* outFile = NULL;
   char* eventsFile = NULL;
   char* counterFile = NULL;
+  char* unitsFile = NULL;
   char* cashFile = NULL;
   int confTest = 0;
 
@@ -25,6 +26,8 @@ int main( int argc, char** argv )
       outFile = argv[++i];
     else if( strcmp( argv[i], "-e" )==0 && i+1<argc )
       eventsFile = argv[++i];
+    else if( strcmp( argv[i], "-u" )==0 && i+1<argc )
+      unitsFile = argv[++i];
     else if( strcmp( argv[i], "-k" )==0 && i+1<argc )
       counterFile = argv[++i];
     else if( strcmp( argv[i], "-s" )==0 && i+1<argc )
@@ -33,7 +36,7 @@ int main( int argc, char** argv )
       confTest = 1;
     else if( strcmp( argv[i], "-h" )==0 )
       {
-      printf("USAGE: %s [-c configFile] [-d configDir] [-o outFile] [-e eventsFile] [-s cashFile] [-conftest]\n", argv[0] );
+      printf("USAGE: %s [-c configFile] [-d configDir] [-o outFile] [-e eventsFile] [-u unitsFile] [-s cashFile] [-conftest]\n", argv[0] );
       exit(0);
       }
     else
@@ -52,6 +55,8 @@ int main( int argc, char** argv )
   SetDefaults( conf );
   ReadConfig( conf, confPath );
   ValidateConfig( conf );
+
+  printf( "conf->monthlySummary = %p\n", conf->monthlySummary );
 
   free( confPath );
   confPath = NULL;
@@ -242,6 +247,18 @@ int main( int argc, char** argv )
   PrintRevenueSummaryForRep( out, conf->customerCare );
 
   PrintRevenueSummary( out, conf->monthlySummary, conf->nMonths, "Total revenue and cost of sales" );
+
+  if( NOTEMPTY( unitsFile ) )
+    {
+    FILE* f = fopen( unitsFile, "w" );
+    if( f!=NULL )
+      {
+      UnitsReport( f, conf );
+      fclose( f );
+      }
+    else
+      Warning( "Failed to open %s for writing", unitsFile );
+    }
 
   if( NOTEMPTY( counterFile ) )
     {

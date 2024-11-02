@@ -17,7 +17,7 @@ LIBS=$(UTILSLIB) -lm -lpthread -luuid $(LUALIB) -lcurl
 
 
 CC=gcc
-CFLAGS=-Wall -O2 $(INCLUDES)
+CFLAGS=-Wall -g -O2 $(INCLUDES)
 # CFLAGS=-Wall -g -rdynamic -fsanitize=address $(INCLUDES)
 
 SHAREDOBJ=\

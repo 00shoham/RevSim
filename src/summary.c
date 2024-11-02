@@ -192,9 +192,21 @@ void AddSummaryRecords( _MONTHLY_SUMMARY* dest, _MONTHLY_SUMMARY* src )
 
 void AddMonthlySummariesSingleMonth( _CONFIG* conf, int Y, int M )
   {
-  if( conf==NULL || Y<=0 || M<1 || M>12 || conf->monthlySummary==NULL )
+  if( conf==NULL )
     {
-    Warning( "AddMonthlySummariesSingleMonth - bad inputs" );
+    Warning( "AddMonthlySummariesSingleMonth - NULL configuration" );
+    return;
+    }
+
+  if( Y<=0 || M<1 || M>12 )
+    {
+    Warning( "AddMonthlySummariesSingleMonth - bad date" );
+    return;
+    }
+
+  if( conf->monthlySummary==NULL )
+    {
+    Warning( "AddMonthlySummariesSingleMonth - NULL summary data" );
     return;
     }
 
@@ -366,5 +378,78 @@ void PrintCounters( FILE* f, _CONFIG* conf )
            totalRejections,
            totalLosses,
            totalTransfers );
+  }
+
+void SetMonthlyUnits( _CONFIG* conf, _MONTHLY_SUMMARY* month, _PRODUCT* p, _ORG* o, int n )
+  {
+  if( month==NULL || p==NULL || o==NULL )
+    Error( "AddMonthlyUnits() - NULL arguments" );
+
+  _MONTHLY_UNITS* mu = (_MONTHLY_UNITS*)SafeCalloc( 1, sizeof(_MONTHLY_UNITS), "Monthly units struct" );
+  mu->product = p;
+  mu->customer = o;
+  mu->nUnits = n;
+  mu->next = month->units;
+  month->units = mu;
+  }
+
+void FreeMonthlyUnitsList( _MONTHLY_UNITS* list )
+  {
+  if( list==NULL )
+    return;
+  if( list->next!=NULL )
+    {
+    FreeMonthlyUnitsList( list->next );
+    list->next = NULL;
+    }
+  free( list );
+  }
+
+void UnitsReport( FILE* f, _CONFIG* conf )
+  {
+  if( f==NULL )
+    Error( "UnitsReport() - No output specified" );
+  if( conf==NULL )
+    Error( "UnitsReport() - No configuration object" );
+  if( conf->monthlySummary==NULL || conf->nMonths<=0 )
+    Error( "UnitsReport() - No monthly data available" );
+
+  int nProducts = 0;
+  for( _PRODUCT* p = conf->products; p!=NULL; p=p->next )
+    if( p->priceByUnits )
+      ++nProducts;
+
+  if( nProducts==0 )
+    {
+    Warning( "UnitsReport() - No products priced per unit" );
+    return;
+    }
+
+  _MONTHLY_SUMMARY* ms = conf->monthlySummary;
+  for( int monthNo=0; monthNo<conf->nMonths; ++monthNo, ++ms )
+    {
+    if( ms->units==NULL )
+      continue;
+
+    fprintf( f, "Month %04d-%02d\n", ms->monthStart.year, ms->monthStart.month );
+    for( _PRODUCT* p = conf->products; p!=NULL; p=p->next )
+      {
+      if( ! p->priceByUnits )
+        continue;
+
+      int nOrgs = 0;
+      int nUnits = 0;
+      for( _MONTHLY_UNITS* u = ms->units; u!=NULL; u=u->next )
+        {
+        if( u->product==p )
+          {
+          ++nOrgs;
+          nUnits += u->nUnits;
+          }
+        }
+
+      fprintf( f, "  %s: %d units at %d customers\n", p->name, nUnits, nOrgs );
+      }
+    }
   }
 

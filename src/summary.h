@@ -1,6 +1,17 @@
 #ifndef _INCLUDE_SUMMARY
 #define _INCLUDE_SUMMARY
 
+typedef struct _org _ORG;
+typedef struct _product _PRODUCT;
+
+typedef struct _monthlyUnits
+  {
+  _PRODUCT* product;
+  _ORG* customer;
+  int nUnits;
+  struct _monthlyUnits *next; 
+  } _MONTHLY_UNITS;
+
 typedef struct _monthlySummary
   {
   _MMDD monthStart;
@@ -16,6 +27,7 @@ typedef struct _monthlySummary
   int nLosses;        /* e.g., stopped using */
   int nTransfers;     /* e.g., opportunities moved from cold-call to AM */
   double taxLossCarryForward; /* from previous year.  only set for month==1 (january) */
+  _MONTHLY_UNITS* units; /* if we sell any products by unit, then how many to each org in this month? */
   } _MONTHLY_SUMMARY;
 
 _MONTHLY_SUMMARY* FindSummaryRecord( char* subject,
@@ -32,5 +44,9 @@ void AddMonthlySummariesSingleMonth( _CONFIG* conf, int Y, int M );
 _MONTHLY_SUMMARY* FindMonthInArray( _MONTHLY_SUMMARY* array, int len, int Y, int M );
 double GetTaxLossCarryForward( _CONFIG* conf, int Y );
 void SetTaxLossCarryForward( _CONFIG* conf, int Y, double amount );
+
+void SetMonthlyUnits( _CONFIG* conf, _MONTHLY_SUMMARY* month, _PRODUCT* p, _ORG* o, int n );
+void FreeMonthlyUnitsList( _MONTHLY_UNITS* list );
+void UnitsReport( FILE* f, _CONFIG* conf );
 
 #endif

@@ -229,7 +229,15 @@ void FreeSalesRep( _SALES_REP* r )
     }
 
   if( r->monthlySummary!=NULL )
+    {
+    for( int i=0; i<r->nMonths; ++i )
+      {
+      _MONTHLY_SUMMARY* ms = r->monthlySummary + i;
+      if( ms->units != NULL )
+        FreeMonthlyUnitsList( ms->units );
+      }
     FREE( r->monthlySummary );
+    }
 
   free( r );
   }

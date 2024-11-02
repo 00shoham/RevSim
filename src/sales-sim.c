@@ -188,7 +188,6 @@ void CloseSingleSale( _CONFIG* conf,
   Event( ".. monthlyGrowthRate = %.1lf", monthlyGrowthRate );
   Event( ".. monthly product attrition is = %.2lf", product->probabilityOfCustomerAttritionPerMonth );
 
-  /* QQQ handle unit-based revenue model here */
   /* process monthly revenue for this sales rep */
   int firstUnit = 1;
   int units = initialUnits;
@@ -222,7 +221,7 @@ void CloseSingleSale( _CONFIG* conf,
         ++ (thisDay->month->nCustomers);
       }
 
-    /* QQQ calculate revenue based on number of units */
+    /* calculate revenue based on number of units */
     if( product->priceByUnits )
       {
       int unitsToAdd = 0;
@@ -236,20 +235,33 @@ void CloseSingleSale( _CONFIG* conf,
         revenue += unitOnboardingFee * units;
         Event( ".. %04d-%02d-%02d %s sold %d units at %.1lf onboarding fee to org %d",
                thisDay->date.year, thisDay->date.month, thisDay->date.day,
-               repBeingPaid->id, units, unitOnboardingFee, targetOrg->number );
+               repBeingPaid->id, units, unitOnboardingFee, customer );
         }
 
-      revenue += unitOnboardingFee * unitsToAdd;
-      Event( ".. %04d-%02d-%02d %s adding %d units at %.1lf onboarding fee to org %d",
-             thisDay->date.year, thisDay->date.month, thisDay->date.day,
-             repBeingPaid->id, unitsToAdd, unitOnboardingFee, targetOrg->number );
+      if( unitsToAdd==0 )
+        {
+        Event( ".. %04d-%02d-%02d org %d already has target number of units",
+               thisDay->date.year, thisDay->date.month, thisDay->date.day,
+               customer );
+        }
+      else
+        {
+        revenue += unitOnboardingFee * unitsToAdd;
+        Event( ".. %04d-%02d-%02d %s adding %d units at %.1lf onboarding fee to org %d",
+               thisDay->date.year, thisDay->date.month, thisDay->date.day,
+               repBeingPaid->id, unitsToAdd, unitOnboardingFee, targetOrg->number );
+        }
 
       revenue += unitMonthlyFee * units;
       Event( ".. %04d-%02d-%02d %s maintained %d units at %.1lf subscription fee to org %d",
              thisDay->date.year, thisDay->date.month, thisDay->date.day,
-             repBeingPaid->id, units, unitMonthlyFee, targetOrg->number );
+             repBeingPaid->id, units, unitMonthlyFee, customer );
 
       units += unitsToAdd;
+      if( thisDay->month ) /* track stats for the month */
+        SetMonthlyUnits( conf, thisDay->month, product, targetOrg, units );
+      else
+        printf( "added %d units but cannot set summary record\n", unitsToAdd );
       }
 
     double actualRevenue = revenue;
