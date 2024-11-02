@@ -144,7 +144,7 @@ void CloseSingleSale( _CONFIG* conf,
   if( overrideRevenue>0 )
     {
     if( product->priceByUnits )
-      Error( "Cannot override revenue on product %s", product->id );
+      Error( "Cannot set initial revenue on product sold by units %s", product->id );
 
     finalRevenue = overrideRevenue;
     monthsToSteadyState = 0;

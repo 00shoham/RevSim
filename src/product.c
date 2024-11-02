@@ -48,16 +48,42 @@ int ValidateSingleProduct( _PRODUCT* p )
     return -1;
     }
 
-  if( p->averageMonthlyDealSize<=0 )
+  if( p->priceByUnits )
     {
-    Warning( "Product %s has no monthly average deal size", p->id );
-    return -2;
+    if( p->averageUnitOnboardingFee==0 && p->sdevUnitOnboardingFee>=0 )
+      {
+      Warning( "Product %s - average onboarding fee 0 but sdev not zero", p->id );
+      return -20;
+      }
+    if( p->averageUnitMonthlyRecurringFee==0 && p->sdevUnitMonthlyRecurringFee>=0 )
+      {
+      Warning( "Product %s - average monthly recurring fee 0 but sdev not zero", p->id );
+      return -21;
+      }
+    if( p->averageCustomerSizeUnits<=0 )
+      {
+      Warning( "Product %s - average customer size 0", p->id );
+      return -22;
+      }
+    if( p->averageUnitMonthlyRecurringFee<=0 && p->averageUnitOnboardingFee==0 )
+      {
+      Warning( "Product %s - at least one of onboarding and monthly fee must be set", p->id );
+      return -23;
+      }
     }
-
-  if( p->sdevDealSize<=0 )
+  else
     {
-    Warning( "Product %s has no standard deviation for deal size", p->id );
-    return -3;
+    if( p->averageMonthlyDealSize<=0 )
+      {
+      Warning( "Product %s has no monthly average deal size", p->id );
+      return -2;
+      }
+
+    if( p->sdevDealSize<=0 )
+      {
+      Warning( "Product %s has no standard deviation for deal size", p->id );
+      return -3;
+      }
     }
 
   if( p->monthlyGrowthRatePercent<=0 )
