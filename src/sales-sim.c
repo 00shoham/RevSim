@@ -290,7 +290,7 @@ void CloseSingleSale( _CONFIG* conf,
         if( TimeToMMDD( payTime, &payDate ) != 0 )
           Error( "Failed to convert time to date (XX)" );
         if( repBeingPaid->workDays==NULL )
-          Notice( "customer car has no workdays" );
+          Warning( "Sales rep has no workdays defined - that's likely a software bug!" );
         payDay = FindSingleDay( &payDate, repBeingPaid->workDays, repBeingPaid->nWorkDays );
         if( payDay!=NULL )
           Notice( "Payday reassigned to %s (on day %d)", repBeingPaid->id, payDay - repBeingPaid->workDays );
@@ -418,6 +418,49 @@ void CloseSingleSale( _CONFIG* conf,
         ++ monthNo;
         if( thisDay->month )
           ++ (thisDay->month->nCustomers);
+        }
+
+      /* calculate revenue based on number of units */
+      if( product->priceByUnits )
+        {
+        int unitsToAdd = 0;
+        if( monthNo <= monthsToSteadyState )
+          unitsToAdd = (int)round((units * monthlyGrowthRate) - units);
+
+        revenue = 0;
+        if( firstUnit )
+          {
+          firstUnit = 0;
+          revenue += unitOnboardingFee * units;
+          Event( "... %04d-%02d-%02d %s sold %d units at %.1lf onboarding fee to org %d",
+                 thisDay->date.year, thisDay->date.month, thisDay->date.day,
+                 conf->customerCare->id, units, unitOnboardingFee, customer );
+          }
+
+        if( unitsToAdd==0 )
+          {
+          Event( "... %04d-%02d-%02d org %d already has target number of units",
+                 thisDay->date.year, thisDay->date.month, thisDay->date.day,
+                 customer );
+          }
+        else
+          {
+          revenue += unitOnboardingFee * unitsToAdd;
+          Event( "... %04d-%02d-%02d %s adding %d units at %.1lf onboarding fee to org %d",
+                 thisDay->date.year, thisDay->date.month, thisDay->date.day,
+                 conf->customerCare->id, unitsToAdd, unitOnboardingFee, targetOrg->number );
+          }
+
+        revenue += unitMonthlyFee * units;
+        Event( "... %04d-%02d-%02d %s maintained %d units at %.1lf subscription fee to org %d",
+               thisDay->date.year, thisDay->date.month, thisDay->date.day,
+               conf->customerCare->id, units, unitMonthlyFee, customer );
+
+        units += unitsToAdd;
+        if( thisDay->month ) /* track stats for the month */
+          SetMonthlyUnits( conf, thisDay->month, product, targetOrg, units );
+        else
+          printf( "added %d units but cannot set summary record\n", unitsToAdd );
         }
 
       thisDay->dailySales = NewRevenueEvent( conf, thisDay->date, customer, conf->customerCare, monthNo, revenue, thisDay->dailySales );
