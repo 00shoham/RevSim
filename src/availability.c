@@ -428,7 +428,6 @@ int EstablishWorkDays( _SALES_REP* s, _CONFIG* config )
       }
 
     if( s->class!=NULL
-        && s->class->productivity!=NULL
         && monthNo < MONTHS )
       productivity = s->class->productivity[monthNo];
     else

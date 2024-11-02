@@ -54,7 +54,7 @@ int ValidateSingleProduct( _PRODUCT* p )
     return -2;
     }
 
-  if( p->dealSizeStandardDeviation<=0 )
+  if( p->sdevDealSize<=0 )
     {
     Warning( "Product %s has no standard deviation for deal size", p->id );
     return -3;
@@ -117,8 +117,8 @@ void PrintProduct( FILE* f, _PRODUCT* p )
     fprintf( f, "PRODUCT_FIRST_SALE_STAGE=%s\n", p->stageArray[0]->id );
   if( p->averageMonthlyDealSize >0 )
     fprintf( f, "PRODUCT_M_REVENUE_AVG=%.1lf\n", p->averageMonthlyDealSize );
-  if( p->dealSizeStandardDeviation >0 )
-    fprintf( f, "PRODUCT_M_REVENUE_SDEV=%.1lf\n", p->dealSizeStandardDeviation );
+  if( p->sdevDealSize >0 )
+    fprintf( f, "PRODUCT_M_REVENUE_SDEV=%.1lf\n", p->sdevDealSize );
   if( p->monthlyGrowthRatePercent >0 )
     fprintf( f, "PRODUCT_M_GROWTH_RATE_PERCENT=%.1lf\n", p->monthlyGrowthRatePercent );
   if( p->averageMonthsToReachSteadyState >0 )

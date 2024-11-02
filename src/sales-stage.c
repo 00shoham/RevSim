@@ -66,7 +66,7 @@ int ValidateSingleStage( _SALES_STAGE* s )
     return -5;
     }
 
-  if( s->daysDelayStandardDeviation<=0 || s->daysDelayStandardDeviation>100 )
+  if( s->sdevDaysDelay<=0 || s->sdevDaysDelay>100 )
     {
     Warning( "Sales stage %s has no/invalid days delay s.deviation", s->id );
     return -6;
@@ -93,18 +93,18 @@ void PrintSalesStage( FILE* f, _SALES_STAGE* s )
     fprintf( f, "STAGE_FOLLOWS=%s\n", s->predecessor->id );
   if( s->daysDelayAverage > 0 )
     fprintf( f, "STAGE_DAYS_AVG=%.1lf\n", s->daysDelayAverage  );
-  if( s->daysDelayStandardDeviation > 0 )
-    fprintf( f, "STAGE_DAYS_SDEV=%.1lf\n", s->daysDelayStandardDeviation );
+  if( s->sdevDaysDelay > 0 )
+    fprintf( f, "STAGE_DAYS_SDEV=%.1lf\n", s->sdevDaysDelay );
   if( s->percentAttrition > 0 )
     fprintf( f, "STAGE_ATTRITION_PERCENT=%.1lf\n", s->percentAttrition );
   if( s->connectAttemptsAverage > 0 )
     fprintf( f, "STAGE_CONNECT_ATTEMPTS_AVG=%.1lf\n", s->connectAttemptsAverage );
-  if( s->connectAttemptsStandardDeviation > 0 )
-    fprintf( f, "STAGE_CONNECT_ATTEMPTS_SDEV=%.1lf\n", s->connectAttemptsStandardDeviation );
+  if( s->sdevConnectAttempts > 0 )
+    fprintf( f, "STAGE_CONNECT_ATTEMPTS_SDEV=%.1lf\n", s->sdevConnectAttempts );
   if( s->connectRetryDaysAverage > 0 )
     fprintf( f, "STAGE_CONNECT_RETRY_DAYS_AVG=%.1lf\n", s->connectRetryDaysAverage );
-  if( s->connectRetryDaysStandardDeviation > 0 )
-    fprintf( f, "STAGE_CONNECT_RETRY_DAYS_SDEV=%.1lf\n", s->connectRetryDaysStandardDeviation );
+  if( s->sdevConnectRetryDays > 0 )
+    fprintf( f, "STAGE_CONNECT_RETRY_DAYS_SDEV=%.1lf\n", s->sdevConnectRetryDays );
   fprintf( f, "\n" );
   }
 

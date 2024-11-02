@@ -311,7 +311,7 @@ int ProcessKeywordPair( _CONFIG* config, char* variable, char* value )
     double d = atof( value );
     if( d<1 || d>100 )
       Error( "CONFIG: %s must be from 1 to 100", variable );
-    config->stages->daysDelayStandardDeviation = d;
+    config->stages->sdevDaysDelay = d;
     return 0;
     }
 
@@ -344,7 +344,7 @@ int ProcessKeywordPair( _CONFIG* config, char* variable, char* value )
     double d = atof( value );
     if( d<0 || d>config->stages->connectAttemptsAverage )
       Error( "CONFIG: %s must be from 0 to %.1lf", config->stages->connectAttemptsAverage );
-    config->stages->connectAttemptsStandardDeviation = d;
+    config->stages->sdevConnectAttempts = d;
     return 0;
     }
 
@@ -366,7 +366,7 @@ int ProcessKeywordPair( _CONFIG* config, char* variable, char* value )
     double d = atof( value );
     if( d<0 || d>config->stages->connectRetryDaysAverage )
       Error( "CONFIG: %s must be from 0 to %.1lf", config->stages->connectRetryDaysAverage );
-    config->stages->connectRetryDaysStandardDeviation = d;
+    config->stages->sdevConnectRetryDays = d;
     return 0;
     }
 
@@ -384,10 +384,92 @@ int ProcessKeywordPair( _CONFIG* config, char* variable, char* value )
     return 0;
     }
 
+  /* QQQ New stuff begins */
+  if( strcasecmp( variable, "PRODUCT_PRICE_BY_UNITS" )==0 )
+    {
+    if( config->products==NULL )
+      Error( "CONFIG: %s must follow PRODUCT", variable );
+    if( strcasecmp( value, "true" )==0 )
+      config->products->priceByUnits = 1;
+    else if( strcasecmp( value, "false" )==0 )
+      config->products->priceByUnits = 0;
+    else Error( "CONFIG: %s must be true or false", variable );
+    return 0;
+    }
+
+  if( strcasecmp( variable, "PRODUCT_UNIT_ONBOARDING_FEE_AVG" )==0 )
+    {
+    if( config->products==NULL )
+      Error( "CONFIG: %s must follow PRODUCT", variable );
+    if( ! config->products->priceByUnits )
+      Error( "CONFIG: %s must follow PRODUCT where PRODUCT_PRICE_BY_UNITS is set to true", variable );
+    double d = atof( value );
+    config->products->averageUnitOnboardingFee = d;
+    return 0;
+    }
+
+  if( strcasecmp( variable, "PRODUCT_UNIT_ONBOARDING_FEE_SDEV" )==0 )
+    {
+    if( config->products==NULL )
+      Error( "CONFIG: %s must follow PRODUCT", variable );
+    if( ! config->products->priceByUnits )
+      Error( "CONFIG: %s must follow PRODUCT where PRODUCT_PRICE_BY_UNITS is set to true", variable );
+    double d = atof( value );
+    config->products->sdevUnitOnboardingFee = d;
+    return 0;
+    }
+
+  if( strcasecmp( variable, "PRODUCT_UNIT_MONTHLY_FEE_AVG" )==0 )
+    {
+    if( config->products==NULL )
+      Error( "CONFIG: %s must follow PRODUCT", variable );
+    if( ! config->products->priceByUnits )
+      Error( "CONFIG: %s must follow PRODUCT where PRODUCT_PRICE_BY_UNITS is set to true", variable );
+    double d = atof( value );
+    config->products->averageUnitMonthlyRecurringFee = d;
+    return 0;
+    }
+
+  if( strcasecmp( variable, "PRODUCT_UNIT_MONTHLY_FEE_SDEV" )==0 )
+    {
+    if( config->products==NULL )
+      Error( "CONFIG: %s must follow PRODUCT", variable );
+    if( ! config->products->priceByUnits )
+      Error( "CONFIG: %s must follow PRODUCT where PRODUCT_PRICE_BY_UNITS is set to true", variable );
+    double d = atof( value );
+    config->products->sdevUnitMonthlyRecurringFee = d;
+    return 0;
+    }
+
+  if( strcasecmp( variable, "PRODUCT_CUSTOMER_NUMBER_UNITS_AVG" )==0 )
+    {
+    if( config->products==NULL )
+      Error( "CONFIG: %s must follow PRODUCT", variable );
+    if( ! config->products->priceByUnits )
+      Error( "CONFIG: %s must follow PRODUCT where PRODUCT_PRICE_BY_UNITS is set to true", variable );
+    double d = atof( value );
+    config->products->averageCustomerSizeUnits = d;
+    return 0;
+    }
+
+  if( strcasecmp( variable, "PRODUCT_CUSTOMER_NUMBER_UNITS_SDEV" )==0 )
+    {
+    if( config->products==NULL )
+      Error( "CONFIG: %s must follow PRODUCT", variable );
+    if( ! config->products->priceByUnits )
+      Error( "CONFIG: %s must follow PRODUCT where PRODUCT_PRICE_BY_UNITS is set to true", variable );
+    double d = atof( value );
+    config->products->sdevCustomerSizeUnits = d;
+    return 0;
+    }
+
+  /* QQQ New stuff ends */
   if( strcasecmp( variable, "PRODUCT_M_REVENUE_AVG" )==0 )
     {
     if( config->products==NULL )
       Error( "CONFIG: %s must follow PRODUCT", variable );
+    if( config->products->priceByUnits )
+      Error( "CONFIG: %s must follow PRODUCT where PRODUCT_PRICE_BY_UNITS is set to false", variable );
     double d = atof( value );
     if( d<0.01 )
       Error( "Invalid PRODUCT_M_REVENUE_AVG (%s)", value );
@@ -399,10 +481,12 @@ int ProcessKeywordPair( _CONFIG* config, char* variable, char* value )
     {
     if( config->products==NULL )
       Error( "CONFIG: %s must follow PRODUCT", variable );
+    if( config->products->priceByUnits )
+      Error( "CONFIG: %s must follow PRODUCT where PRODUCT_PRICE_BY_UNITS is set to false", variable );
     double d = atof( value );
     if( d<0.01 )
       Error( "Invalid PRODUCT_M_REVENUE_SDEV (%s)", value );
-    config->products->dealSizeStandardDeviation = d;
+    config->products->sdevDealSize = d;
     return 0;
     }
 

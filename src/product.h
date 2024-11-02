@@ -5,11 +5,23 @@ typedef struct _product
   {
   char* id;
   char* name;
+
+  int priceByUnits;
+
+  double averageUnitOnboardingFee;
+  double sdevUnitOnboardingFee;
+  double averageUnitMonthlyRecurringFee;
+  double sdevUnitMonthlyRecurringFee;
+  double averageCustomerSizeUnits;
+  double sdevCustomerSizeUnits;
+
   double averageMonthlyDealSize;
-  double dealSizeStandardDeviation;
+  double sdevDealSize;
+
   double monthlyGrowthRatePercent;
   double averageMonthsToReachSteadyState;
   double sdevMonthsToReachSteadyState;
+
   double probabilityOfCustomerAttritionPerMonth;
 
   double initialMonthlyRevenue;

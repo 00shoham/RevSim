@@ -130,13 +130,22 @@ void CloseSingleSale( _CONFIG* conf,
     }
 
   /* Random if really simulating, fixed if the revenue was provided: */
+
+  double initialRevenue = -1;
   double finalRevenue = -1;
   int monthsToSteadyState = -1;
   double monthlyGrowthRate = -1;
-  double initialRevenue = -1;
+
+  int initialUnits = -1;
+  int finalUnits = -1;
+  double unitOnboardingFee = 0.0;
+  double unitMonthlyFee = 0.0;
 
   if( overrideRevenue>0 )
     {
+    if( product->priceByUnits )
+      Error( "Cannot override revenue on product %s", product->id );
+
     finalRevenue = overrideRevenue;
     monthsToSteadyState = 0;
     monthlyGrowthRate = 0;
@@ -144,23 +153,45 @@ void CloseSingleSale( _CONFIG* conf,
     }
   else
     {
-    finalRevenue = RandN2( product->averageMonthlyDealSize, product->dealSizeStandardDeviation );
     monthsToSteadyState = RandN2( product->averageMonthsToReachSteadyState, product->sdevMonthsToReachSteadyState );
     monthlyGrowthRate = 1.0 + product->monthlyGrowthRatePercent/100.0;
-    initialRevenue = finalRevenue / pow( monthlyGrowthRate, (double)monthsToSteadyState );
+
+    if( product->priceByUnits )
+      {
+      finalUnits = (int)(round( RandN2( product->averageCustomerSizeUnits, product->sdevCustomerSizeUnits ) ));
+      initialUnits = (int)(round( finalUnits / pow( monthlyGrowthRate, (double)monthsToSteadyState ) ));
+      unitOnboardingFee = RandN2( product->averageUnitOnboardingFee, product->sdevUnitOnboardingFee );
+      unitMonthlyFee = RandN2( product->averageUnitMonthlyRecurringFee, product->sdevUnitMonthlyRecurringFee );
+      }
+    else
+      {
+      finalRevenue = RandN2( product->averageMonthlyDealSize, product->sdevDealSize );
+      initialRevenue = finalRevenue / pow( monthlyGrowthRate, (double)monthsToSteadyState );
+      }
     }
 
   if( thisDay->month )
     ++ (thisDay->month->nWins);
 
   Event( "Win at customer %d", customer );
-  Event( ".. finalRevenue = %.1lf", finalRevenue );
+  if( product->priceByUnits )
+    {
+    Event( ".. unitOnboardingFee = %.1lf", unitOnboardingFee );
+    Event( ".. unitMonthlyFee = %.1lf", unitMonthlyFee );
+    }
+  else
+    {
+    Event( ".. initialRevenue = %.1lf", initialRevenue );
+    Event( ".. finalRevenue = %.1lf", finalRevenue );
+    }
   Event( ".. monthsToSteadyState = %d", monthsToSteadyState );
   Event( ".. monthlyGrowthRate = %.1lf", monthlyGrowthRate );
-  Event( ".. initialRevenue = %.1lf", initialRevenue );
   Event( ".. monthly product attrition is = %.2lf", product->probabilityOfCustomerAttritionPerMonth );
 
+  /* QQQ handle unit-based revenue model here */
   /* process monthly revenue for this sales rep */
+  int firstUnit = 1;
+  int units = initialUnits;
   double revenue = initialRevenue;
   int monthNo = 0;
   int lostCustomer = 0;
@@ -189,6 +220,36 @@ void CloseSingleSale( _CONFIG* conf,
       ++ monthNo;
       if( thisDay->month )
         ++ (thisDay->month->nCustomers);
+      }
+
+    /* QQQ calculate revenue based on number of units */
+    if( product->priceByUnits )
+      {
+      int unitsToAdd = 0;
+      if( monthNo <= monthsToSteadyState )
+        unitsToAdd = (int)round((units * monthlyGrowthRate) - units);
+
+      revenue = 0;
+      if( firstUnit )
+        {
+        firstUnit = 0;
+        revenue += unitOnboardingFee * units;
+        Event( ".. %04d-%02d-%02d %s sold %d units at %.1lf onboarding fee to org %d",
+               thisDay->date.year, thisDay->date.month, thisDay->date.day,
+               repBeingPaid->id, units, unitOnboardingFee, targetOrg->number );
+        }
+
+      revenue += unitOnboardingFee * unitsToAdd;
+      Event( ".. %04d-%02d-%02d %s adding %d units at %.1lf onboarding fee to org %d",
+             thisDay->date.year, thisDay->date.month, thisDay->date.day,
+             repBeingPaid->id, unitsToAdd, unitOnboardingFee, targetOrg->number );
+
+      revenue += unitMonthlyFee * units;
+      Event( ".. %04d-%02d-%02d %s maintained %d units at %.1lf subscription fee to org %d",
+             thisDay->date.year, thisDay->date.month, thisDay->date.day,
+             repBeingPaid->id, units, unitMonthlyFee, targetOrg->number );
+
+      units += unitsToAdd;
       }
 
     double actualRevenue = revenue;
@@ -247,29 +308,11 @@ void CloseSingleSale( _CONFIG* conf,
       payDay = FindSingleDay( &payDate, repBeingPaid->workDays, repBeingPaid->nWorkDays );
       // Event( "Payday reassigned to %s (on day %d)", repBeingPaid->id, payDay - repBeingPaid->workDays );
       }
-    /*
-    else
-      Notice( "Payday on %04d-%02d-%02d for %s", payDay->date.year, payDay->date.month, payDay->date.day, repBeingPaid->id );
-    */
 
     if( payDay!=NULL )
       { /* not past end of sim */
       if( payDay >= repBeingPaid->endOfWorkDays )
         Warning( "Pay day for %s past rep last day", repBeingPaid->id );
-      /*
-      else
-        Notice( "Pay day for %s on %04d-%02d-%02d (last day is %04d-%02d-%02d) (on %d, last=%d)",
-                repBeingPaid->id,
-                payDay->date.year,
-                payDay->date.month,
-                payDay->date.day,
-                (repBeingPaid->endOfWorkDays - 1)->date.year,
-                (repBeingPaid->endOfWorkDays - 1)->date.month,
-                (repBeingPaid->endOfWorkDays - 1)->date.day,
-                payDay - repBeingPaid->workDays,
-                repBeingPaid->endOfWorkDays - repBeingPaid->workDays
-                );
-      */
 
       payDay->dailySales = NewRevenueEvent( conf, payDay->date, customer, repBeingPaid, monthNo, actualRevenue, payDay->dailySales );
 
@@ -290,15 +333,14 @@ void CloseSingleSale( _CONFIG* conf,
       }
 
     /* monthly growth */
-    if( revenue < finalRevenue )
-      revenue *= monthlyGrowthRate;
+    if( ! product->priceByUnits )
+      { /* revenue is done by unit if priced by units */
+      if( revenue < finalRevenue )
+        revenue *= monthlyGrowthRate;
+      }
 
     lastRevenueDay = thisDay;
     thisDay = FindThisDateNextMonth( thisDay, repLastDay, NULL );
-    /*
-    if( thisDay!=NULL )
-      Event( "thisDay becomes %04d-%02d-%02d", thisDay->date.year, thisDay->date.month, thisDay->date.day );
-    */
     }
 
   /* continue revenue with customer care */
@@ -510,7 +552,7 @@ int SimulateInitialCall( _CONFIG* conf,
     /* possibly delay this event due to a rebooking */
     if( stage->connectAttemptsAverage>0 )
       {
-      int nRebookAttempts = (int)(RandN2( stage->connectAttemptsAverage, stage->connectAttemptsStandardDeviation ) + 0.5);
+      int nRebookAttempts = (int)(RandN2( stage->connectAttemptsAverage, stage->sdevConnectAttempts ) + 0.5);
       Event( "There will be %d call attempts from %s to %s to complete this task", nRebookAttempts, salesRep->id, customerID );
       for( int callNum=0; callNum<nRebookAttempts; ++callNum )
         {
@@ -520,7 +562,7 @@ int SimulateInitialCall( _CONFIG* conf,
           if( thisDay->month )
             ++ (thisDay->month->nCalls); /* update the monthly summary data */
           }
-        int nDaysToNextCall = (int)(RandN2( stage->connectRetryDaysAverage, stage->connectRetryDaysStandardDeviation ) + 0.5);
+        int nDaysToNextCall = (int)(RandN2( stage->connectRetryDaysAverage, stage->sdevConnectRetryDays ) + 0.5);
         if( thisDay==NULL )
           Warning( "thisDay==NULL" );
         else if( thisDay >= repLastDay )
@@ -586,7 +628,7 @@ int SimulateInitialCall( _CONFIG* conf,
                stageNo+1, product->id );
 
     /* didn't win, didn't lose - move on to next stage then */
-    nDaysToNextStage = (int)RandN2( stage->daysDelayAverage, stage->daysDelayStandardDeviation );
+    nDaysToNextStage = (int)RandN2( stage->daysDelayAverage, stage->sdevDaysDelay );
     Event( "Sales stage %s complete on %04d-%02d-%02d.  Next stage in %d+ days",
            stage->id,
            thisDay->date.year, thisDay->date.month, thisDay->date.day,

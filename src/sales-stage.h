@@ -13,12 +13,12 @@ typedef struct _salesStage
 
   struct _salesStage* predecessor;
   double daysDelayAverage;
-  double daysDelayStandardDeviation;
+  double sdevDaysDelay;
 
   double connectAttemptsAverage;
-  double connectAttemptsStandardDeviation;
+  double sdevConnectAttempts;
   double connectRetryDaysAverage;
-  double connectRetryDaysStandardDeviation;
+  double sdevConnectRetryDays;
 
   double percentAttrition;
 
