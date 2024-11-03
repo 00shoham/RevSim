@@ -1523,22 +1523,6 @@ void ValidateConfig( _CONFIG* config )
       Error( "Sales rep does not validate - %s", r->id );
     }
 
-  /* why??
-  if( config->monthlySummary!=NULL )
-    FREE( config->monthlySummary );
-  */
-
-  /* QQQ old location
-  printf( "Initializing monthly summary array for the config as a whole.\n" );
-  InitializeMonthlySummaryArray( "Simulation",
-                                 &(config->monthlySummary),
-                                 &(config->nMonths),
-                                 NULL,
-                                 0,
-                                 &(config->simulationFirstDay),
-                                 &(config->simulationEndDay) );
-  */
-
   if( ( config->marketSize!=0 && config->orgCoolingPeriodDays==0 )
       || ( config->marketSize==0 && config->orgCoolingPeriodDays!=0 ) )
     Error( "If either MARKET_SIZE or ORG_COOLING_PERIOD_DAYS is specified, the other must also be set." );

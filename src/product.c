@@ -70,6 +70,11 @@ int ValidateSingleProduct( _PRODUCT* p )
       Warning( "Product %s - at least one of onboarding and monthly fee must be set", p->id );
       return -23;
       }
+    if( p->averageMonthlyDealSize>0 || p->sdevDealSize>0 )
+      {
+      Warning( "Product %s - monthly deal size is not compatible with price-by-units", p->id );
+      return -24;
+      }
     }
   else
     {
