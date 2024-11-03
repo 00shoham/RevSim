@@ -75,6 +75,11 @@ int ValidateSingleProduct( _PRODUCT* p )
       Warning( "Product %s - monthly deal size is not compatible with price-by-units", p->id );
       return -24;
       }
+    if( p->initialMonthlyRevenue>0 || p->initialMonthlyCustomers>0 )
+      {
+      Warning( "Product %s - initial revenue or customer count not permitted when simulating unit-based pricing", p->id );
+      return -25;
+      }
     }
   else
     {
