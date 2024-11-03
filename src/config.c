@@ -391,7 +391,6 @@ int ProcessKeywordPair( _CONFIG* config, char* variable, char* value )
     return 0;
     }
 
-  /* QQQ New stuff begins */
   if( strcasecmp( variable, "PRODUCT_PRICE_BY_UNITS" )==0 )
     {
     if( config->products==NULL )
@@ -470,7 +469,6 @@ int ProcessKeywordPair( _CONFIG* config, char* variable, char* value )
     return 0;
     }
 
-  /* QQQ New stuff ends */
   if( strcasecmp( variable, "PRODUCT_M_REVENUE_AVG" )==0 )
     {
     if( config->products==NULL )

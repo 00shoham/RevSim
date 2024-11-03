@@ -41,8 +41,28 @@ The following processes can be modeled:
   See parameters:
   PRODUCT
   PRODUCT_NAME
+
+* By default, a product is a monolithic thing with a price that falls on a
+  bell curve.  You specify the bell curve with these variables:
+
   PRODUCT_M_REVENUE_AVG
   PRODUCT_M_REVENUE_SDEV
+
+* Alternately, a product could be setup to be sold as distinct units,
+  where a customer adds units over time.  Each unit could then have an
+  onboarding fee associated with it, and/or a monthly recurring fee
+  associated with it.  To set this up, first set:
+
+  PRODUCT_PRICE_BY_UNITS=true
+
+  Next, set the prices for units (initial and recurring) with these variables:
+
+  PRODUCT_CUSTOMER_NUMBER_UNITS_AVG    # this sets typical customer size, in terms of units
+  PRODUCT_CUSTOMER_NUMBER_UNITS_SDEV
+  PRODUCT_UNIT_ONBOARDING_FEE_AVG      # if you charge a fee to onboard a unit
+  PRODUCT_UNIT_ONBOARDING_FEE_SDEV
+  PRODUCT_UNIT_MONTHLY_FEE_AVG         # if you charge a monthly fee per unit
+  PRODUCT_UNIT_MONTHLY_FEE_SDEV
 
 * Customers who subscribe to a given product often start small and ramp
   up utilization of a product (and therefore revenue) over time.  This
@@ -53,6 +73,10 @@ The following processes can be modeled:
   PRODUCT_M_GROWTH_RATE_PERCENT
   PRODUCT_MONTHS_TIL_STEADY_STATE_AVG
   PRODUCT_MONTHS_TIL_STEADY_STATE_SDEV
+
+  These variables (above) apply regardless of whether the product is sold
+  as a monolithic thing or via units with individual onboarding and monthly
+  fees.  With units, it is the unit count that ramps up with these variables.
 
 * Customers drop off - they lose interest, their needs evolve, they
   even go out of business.  The probability that a given customer of a
