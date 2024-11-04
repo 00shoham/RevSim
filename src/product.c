@@ -103,19 +103,21 @@ int ValidateSingleProduct( _PRODUCT* p )
     return -30;
     }
 
-  if( p->monthlyGrowthRatePercent<=0 )
+  int doingUnitGrowth = p->priceByUnits && p->averageMonthlyGrowthRateUnits > 0;
+
+  if( p->monthlyGrowthRatePercent<=0 && ! doingUnitGrowth )
     {
     Warning( "Product %s has no monthly per-deal revenue growth rate", p->id );
     return -4;
     }
 
-  if( p->averageMonthsToReachSteadyState<=0 )
+  if( p->averageMonthsToReachSteadyState<=0 && ! doingUnitGrowth )
     {
     Warning( "Product %s has no # of months to reach per-deal revenue steady state", p->id );
     return -5;
     }
 
-  if( p->sdevMonthsToReachSteadyState<=0 )
+  if( p->sdevMonthsToReachSteadyState<=0 && ! doingUnitGrowth )
     {
     Warning( "Product %s has no # of months to reach per-deal revenue steady state", p->id );
     return -6;

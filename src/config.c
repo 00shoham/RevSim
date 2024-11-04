@@ -1493,7 +1493,7 @@ void ValidateConfig( _CONFIG* config )
   if( config->salesReps==NULL )
     Error( "Simulation must specify at least one sales SALES_REP" );
   if( config->customerCare==NULL )
-    Error( "SOmething went wrong - there is no CUSTOMER_CARE built-in sales rep" );
+    Error( "Something went wrong - there is no CUSTOMER_CARE built-in sales rep" );
 
   if( ( config->sdevCollectionsDelayDays==0 
       && config->averageCollectionsDelayDays!=0 )
@@ -1506,14 +1506,16 @@ void ValidateConfig( _CONFIG* config )
 
   for( _HOLIDAY* h = config->holidays; h!=NULL; h=h->next )
     {
-    if( ValidateSingleHoliday( h )!=0 )
-      Error( "Holiday does not validate - %s", h->id );
+    int err = ValidateSingleHoliday( h );
+    if( err )
+      Error( "Holiday does not validate - %s (error %d)", h->id, err );
     }
 
   for( _VACATION* v = config->vacations; v!=NULL; v=v->next )
     {
-    if( ValidateSingleVacation( v )!=0 )
-      Error( "Vacation does not validate - %s", v->id );
+    int err = ValidateSingleVacation( v );
+    if( err )
+      Error( "Vacation does not validate - %s (error %d)", v->id, err );
     }
 
   _SALES_STAGE** stageArray = NULL;

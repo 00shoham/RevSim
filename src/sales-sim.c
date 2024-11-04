@@ -465,8 +465,19 @@ void CloseSingleSale( _CONFIG* conf,
       if( product->priceByUnits )
         {
         int unitsToAdd = 0;
-        if( monthNo <= monthsToSteadyState )
-          unitsToAdd = (int)round((units * monthlyGrowthRate) - units);
+
+        if( productFixedMonthlyUnitsGrowth > 0 )
+          {
+          if( units < finalUnits )
+            {
+            unitsToAdd = productFixedMonthlyUnitsGrowth;
+            }
+          }
+        else
+          {
+          if( monthNo <= monthsToSteadyState )
+            unitsToAdd = (int)round((units * monthlyGrowthRate) - units);
+          }
 
         revenue = 0;
         if( firstUnit )
