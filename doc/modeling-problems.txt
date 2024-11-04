@@ -64,6 +64,16 @@ The following processes can be modeled:
   PRODUCT_UNIT_MONTHLY_FEE_AVG         # if you charge a monthly fee per unit
   PRODUCT_UNIT_MONTHLY_FEE_SDEV
 
+  If the product is sold by units, there are two options for how many units the
+  simulator should assume were active in any given month (new and recurring).  One
+  is to use the PRODUCT_M_GROWTH_RATE_PERCENT, PRODUCT_MONTHS_TIL_STEADY_STATE_AVG
+  and PRODUCT_MONTHS_TIL_STEADY_STATE_SDEV figures below, which is an exponential
+  growth model, and the other is to just fix the number of units that the customer
+  will grow, monthly:
+
+  PRODUCT_M_UNITS_GROWTH_AVG
+  PRODUCT_M_UNITS_GROWTH_SDEV
+
 * Customers who subscribe to a given product often start small and ramp
   up utilization of a product (and therefore revenue) over time.  This
   should be reflected in the simulated monthly revenue.
