@@ -495,6 +495,34 @@ int ProcessKeywordPair( _CONFIG* config, char* variable, char* value )
     return 0;
     }
 
+  if( strcasecmp( variable, "PRODUCT_M_UNITS_GROWTH_AVG" )==0 )
+    {
+    if( config->products==NULL )
+      Error( "CONFIG: %s must follow PRODUCT", variable );
+    if( ! config->products->priceByUnits )
+      Error( "CONFIG: %s must follow PRODUCT where PRODUCT_PRICE_BY_UNITS is set to true", variable );
+    double d = atof( value );
+    if( d<1 )
+      Error( "Invalid PRODUCT_M_UNITS_GROWTH_AVG (%s) - must be at least 1", value );
+    config->products->averageMonthlyGrowthRateUnits = d;
+    if( config->products->monthlyGrowthRatePercent > 0 )
+      Error( "Variable %s conflicts with PRODUCT_M_GROWTH_RATE_PERCENT", variable );
+    return 0;
+    }
+
+  if( strcasecmp( variable, "PRODUCT_M_UNITS_GROWTH_SDEV" )==0 )
+    {
+    if( config->products==NULL )
+      Error( "CONFIG: %s must follow PRODUCT", variable );
+    if( ! config->products->priceByUnits )
+      Error( "CONFIG: %s must follow PRODUCT where PRODUCT_PRICE_BY_UNITS is set to true", variable );
+    double d = atof( value );
+    if( d<1 )
+      Error( "Invalid PRODUCT_M_UNITS_GROWTH_SDEV (%s) - must be at least 1", value );
+    config->products->sdevMonthlyGrowthRateUnits = d;
+    return 0;
+    }
+
   if( strcasecmp( variable, "PRODUCT_M_GROWTH_RATE_PERCENT" )==0 )
     {
     if( config->products==NULL )
@@ -503,6 +531,8 @@ int ProcessKeywordPair( _CONFIG* config, char* variable, char* value )
     if( d<-100 || d>100 )
       Error( "Invalid PRODUCT_M_GROWTH_RATE_PERCENT (%s)", value );
     config->products->monthlyGrowthRatePercent = d;
+    if( config->products->averageMonthlyGrowthRateUnits > 0 )
+      Error( "Variable %s conflicts with PRODUCT_M_UNITS_GROWTH_AVG", variable );
     return 0;
     }
 

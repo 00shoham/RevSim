@@ -14,6 +14,8 @@ typedef struct _product
   double sdevUnitMonthlyRecurringFee;
   double averageCustomerSizeUnits;
   double sdevCustomerSizeUnits;
+  double averageMonthlyGrowthRateUnits;
+  double sdevMonthlyGrowthRateUnits;
 
   double averageMonthlyDealSize;
   double sdevDealSize;

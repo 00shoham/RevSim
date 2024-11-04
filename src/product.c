@@ -96,6 +96,13 @@ int ValidateSingleProduct( _PRODUCT* p )
       }
     }
 
+  if( p->monthlyGrowthRatePercent > 0 
+      && p->averageMonthlyGrowthRateUnits > 0 )
+    {
+    Warning( "Product %s has both PRODUCT_M_UNITS_GROWTH_AVG and PRODUCT_M_GROWTH_RATE_PERCENT (you must choose only one)", p->id );
+    return -30;
+    }
+
   if( p->monthlyGrowthRatePercent<=0 )
     {
     Warning( "Product %s has no monthly per-deal revenue growth rate", p->id );
