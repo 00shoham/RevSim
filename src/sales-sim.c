@@ -131,13 +131,13 @@ void CloseSingleSale( _CONFIG* conf,
 
   /* Random if really simulating, fixed if the revenue was provided: */
 
-  double initialRevenue = -1;
-  double finalRevenue = -1;
+  double initialRevenue = 0;
+  double finalRevenue = 0;
   int monthsToSteadyState = -1;
   double monthlyGrowthRate = -1;
 
-  int initialUnits = -1;
-  int finalUnits = -1;
+  int initialUnits = 0;
+  int finalUnits = 0;
   double unitOnboardingFee = 0.0;
   double unitMonthlyFee = 0.0;
 
@@ -153,8 +153,11 @@ void CloseSingleSale( _CONFIG* conf,
     }
   else
     {
-    monthsToSteadyState = RandN2( product->averageMonthsToReachSteadyState, product->sdevMonthsToReachSteadyState );
-    monthlyGrowthRate = 1.0 + product->monthlyGrowthRatePercent/100.0;
+    if( product->averageMonthsToReachSteadyState>0 && product->monthlyGrowthRatePercent>0 )
+      {
+      monthsToSteadyState = RandN2( product->averageMonthsToReachSteadyState, product->sdevMonthsToReachSteadyState );
+      monthlyGrowthRate = 1.0 + product->monthlyGrowthRatePercent/100.0;
+      }
 
     if( product->priceByUnits )
       {
@@ -170,23 +173,50 @@ void CloseSingleSale( _CONFIG* conf,
       }
     }
 
+  if( ! product->priceByUnits
+      && ( monthsToSteadyState<=0
+           || monthlyGrowthRate<=0 ) )
+    {
+    Error( "Product %s not priced by units, but"
+           " months to steady state or monthly growth rate not calculated.",
+            product->id );
+    }
+
   if( thisDay->month )
     ++ (thisDay->month->nWins);
+
+  int productFixedMonthlyUnitsGrowth = 0;
+  if( product->averageMonthlyGrowthRateUnits>0 )
+    {
+    initialUnits = 0;
+    productFixedMonthlyUnitsGrowth = round( RandN2( product->averageMonthlyGrowthRateUnits,
+                                                    product->sdevMonthlyGrowthRateUnits ) );
+    }
 
   Event( "Win at customer %d", customer );
   if( product->priceByUnits )
     {
     Event( ".. unitOnboardingFee = %.1lf", unitOnboardingFee );
     Event( ".. unitMonthlyFee = %.1lf", unitMonthlyFee );
+    if( initialUnits>0 )
+      Event( ".. initialUnits = %d", initialUnits );
+    if( finalUnits>0 )
+      Event( ".. finalUnits = %d", finalUnits );
     }
   else
     {
-    Event( ".. initialRevenue = %.1lf", initialRevenue );
+    if( initialRevenue>0 )
+      Event( ".. initialRevenue = %.1lf", initialRevenue );
     Event( ".. finalRevenue = %.1lf", finalRevenue );
     }
   Event( ".. monthsToSteadyState = %d", monthsToSteadyState );
   Event( ".. monthlyGrowthRate = %.1lf", monthlyGrowthRate );
   Event( ".. monthly product attrition is = %.2lf", product->probabilityOfCustomerAttritionPerMonth );
+
+  if( product->averageMonthlyGrowthRateUnits>0 )
+    {
+    Event( ".. customer will add %d units monthly", productFixedMonthlyUnitsGrowth );
+    }
 
   /* process monthly revenue for this sales rep */
   int firstUnit = 1;
@@ -225,8 +255,19 @@ void CloseSingleSale( _CONFIG* conf,
     if( product->priceByUnits )
       {
       int unitsToAdd = 0;
-      if( monthNo <= monthsToSteadyState )
-        unitsToAdd = (int)round((units * monthlyGrowthRate) - units);
+
+      if( productFixedMonthlyUnitsGrowth > 0 )
+        {
+        if( units < finalUnits )
+          {
+          unitsToAdd = productFixedMonthlyUnitsGrowth;
+          }
+        }
+      else
+        {
+        if( monthNo <= monthsToSteadyState )
+          unitsToAdd = (int)round((units * monthlyGrowthRate) - units);
+        }
 
       revenue = 0;
       if( firstUnit )
