@@ -281,7 +281,7 @@ void PrintRevenueSummary( FILE* out, _MONTHLY_SUMMARY* ms, int nMonths, char* ti
     comTotal += ms->commission;
     expTotal += ms->expense;
 
-    fprintf( out, "%04d-%02d % 11.2f % 11.2f % 11.2f % 11.2f % 11.2f % 11.2f\n",
+    fprintf( out, "%04d-%02d % 11.0f % 11.0f % 11.0f % 11.0f % 11.0f % 11.0f\n",
                   ms->monthStart.year, ms->monthStart.month,
                   ms->revenue, ms->commission, ms->salary, ms->expense,
                   net, netTotal );
@@ -291,7 +291,7 @@ void PrintRevenueSummary( FILE* out, _MONTHLY_SUMMARY* ms, int nMonths, char* ti
   fprintf( out, "        %11s %11s %11s %11s %11s %11s\n",
            "-----------", "-----------", "-----------", "-----------", "-----------", "-----------" );
 
-  fprintf( out, " Total: % 11.2f % 11.2f % 11.2f % 11.2f %11s % 11.2f\n",
+  fprintf( out, " Total: % 11.0f % 11.0f % 11.0f % 11.0f %11s % 11.0f\n",
                 revTotal, comTotal, salTotal, expTotal, " ",
                 netTotal );
 
