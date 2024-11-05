@@ -642,6 +642,9 @@ int ProcessKeywordPair( _CONFIG* config, char* variable, char* value )
     if( d<0 || d>=80 )
       Error( "CONFIG: %s must be from 0 to 80", variable );
     config->salesRepClasses->commission = d;
+    if( config->salesRepClasses->commissionMonths==0 )
+      config->salesRepClasses->commissionMonths = DEFAULT_COMMISSION_MONTHS;
+
     return 0;
     }
 

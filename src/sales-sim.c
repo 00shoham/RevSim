@@ -107,16 +107,12 @@ void CloseSingleSale( _CONFIG* conf,
     return;
   /* note that targetOrg is permitted to be NULL */
 
-  if( salesRep == conf->customerCare )
-    Notice( "CloseSingleSale( rep=%s, firstDay=%04d-%02d-%02d, lastDay(-1)=%04d-%02d-%02d",
-            salesRep->id,
-            repFirstDay->date.year, repFirstDay->date.month, repFirstDay->date.day,
-            (repLastDay-1)->date.year, (repLastDay-1)->date.month, (repLastDay-1)->date.day );
+  Event( "CloseSingleSale( rep=%s, firstDay=%04d-%02d-%02d, lastDay(-1)=%04d-%02d-%02d",
+          salesRep->id,
+          repFirstDay->date.year, repFirstDay->date.month, repFirstDay->date.day,
+          (repLastDay-1)->date.year, (repLastDay-1)->date.month, (repLastDay-1)->date.day );
 
   _SINGLE_DAY* thisDay = repFirstDay;
-  _SINGLE_DAY* lastRevenueDay = NULL;
-
-  // Notice( "thisDay starts as day %d of rep %s", thisDay - salesRep->workDays, salesRep->id );
 
   ++ (conf->nCustomerWins);
 
@@ -129,12 +125,12 @@ void CloseSingleSale( _CONFIG* conf,
     customer = conf->customerNumber;
     }
 
-  /* Random if really simulating, fixed if the revenue was provided: */
+  /* Random if really simulating, fixed if the revenue was provided (i.e., initial revenue): */
 
   double initialRevenue = 0;
   double finalRevenue = 0;
-  int monthsToSteadyState = -1;
-  double monthlyGrowthRate = -1;
+  double monthlyGrowthRate = 1.0 + product->monthlyGrowthRatePercent/100.0;
+  int monthsToSteadyState = RandN2( product->averageMonthsToReachSteadyState, product->sdevMonthsToReachSteadyState );
 
   int initialUnits = 0;
   int finalUnits = 0;
@@ -153,12 +149,6 @@ void CloseSingleSale( _CONFIG* conf,
     }
   else
     {
-    if( product->averageMonthsToReachSteadyState>0 && product->monthlyGrowthRatePercent>0 )
-      {
-      monthsToSteadyState = RandN2( product->averageMonthsToReachSteadyState, product->sdevMonthsToReachSteadyState );
-      monthlyGrowthRate = 1.0 + product->monthlyGrowthRatePercent/100.0;
-      }
-
     if( product->priceByUnits )
       {
       finalUnits = (int)(round( RandN2( product->averageCustomerSizeUnits, product->sdevCustomerSizeUnits ) ));
@@ -173,15 +163,6 @@ void CloseSingleSale( _CONFIG* conf,
       }
     }
 
-  if( ! product->priceByUnits
-      && ( monthsToSteadyState<=0
-           || monthlyGrowthRate<=0 ) )
-    {
-    Error( "Product %s not priced by units, but"
-           " months to steady state or monthly growth rate not calculated.",
-            product->id );
-    }
-
   if( thisDay->month )
     ++ (thisDay->month->nWins);
 
@@ -189,8 +170,8 @@ void CloseSingleSale( _CONFIG* conf,
   if( product->averageMonthlyGrowthRateUnits>0 )
     {
     initialUnits = 0;
-    productFixedMonthlyUnitsGrowth = round( RandN2( product->averageMonthlyGrowthRateUnits,
-                                                    product->sdevMonthlyGrowthRateUnits ) );
+    productFixedMonthlyUnitsGrowth = (int)round( RandN2( product->averageMonthlyGrowthRateUnits,
+                                                         product->sdevMonthlyGrowthRateUnits ) );
     }
 
   Event( "Win at customer %d", customer );
@@ -219,15 +200,17 @@ void CloseSingleSale( _CONFIG* conf,
     }
 
   /* process monthly revenue for this sales rep */
-  int firstUnit = 1;
   int units = initialUnits;
   double revenue = initialRevenue;
   int monthNo = 0;
-  int lostCustomer = 0;
   _SALES_REP* repBeingPaid = salesRep;
 
-  while( thisDay!=NULL && repBeingPaid == salesRep )
+  while( thisDay!=NULL && thisDay < repBeingPaid->endOfWorkDays )
     {
+    char* repID = "(nobody)";
+    if( repBeingPaid!=NULL && NOTEMPTY( repBeingPaid->id ) )
+      repID = repBeingPaid->id;
+
     if( PercentProbabilityEvent( product->probabilityOfCustomerAttritionPerMonth ) )
       {
       Event( "Customer %d lost at month %04d-%02d (%d)", customer, thisDay->date.year, thisDay->date.month, monthNo );
@@ -240,149 +223,127 @@ void CloseSingleSale( _CONFIG* conf,
       if( targetOrg != NULL )
         OrgAttrition( conf, targetOrg, thisDay->t );
 
-      lostCustomer = 1;
       break; /* lost the customer */
       }
-    else
-      {
-      ++ (conf->nCustomerMonths);
-      ++ monthNo;
-      if( thisDay->month )
-        ++ (thisDay->month->nCustomers);
-      }
+
+    /* stats - # of customer-months in sim */
+    ++ monthNo;
+    ++ (conf->nCustomerMonths);
+    if( thisDay->month )
+      ++ (thisDay->month->nCustomers);
 
     /* calculate revenue based on number of units */
     if( product->priceByUnits )
       {
       int unitsToAdd = 0;
 
-      if( productFixedMonthlyUnitsGrowth > 0 )
+      if( units< finalUnits )
         {
-        if( units < finalUnits )
-          {
+        if( productFixedMonthlyUnitsGrowth > 0 ) /* fixed */
           unitsToAdd = productFixedMonthlyUnitsGrowth;
-          }
+        else /* exponential */
+          unitsToAdd = (int)round(((double)units * monthlyGrowthRate)) - units;
         }
-      else
-        {
-        if( monthNo <= monthsToSteadyState )
-          unitsToAdd = (int)round((units * monthlyGrowthRate) - units);
-        }
-
-      revenue = 0;
-      if( firstUnit )
-        {
-        firstUnit = 0;
-        revenue += unitOnboardingFee * units;
-        Event( ".. %04d-%02d-%02d %s sold %d units at %.1lf onboarding fee to org %d",
-               thisDay->date.year, thisDay->date.month, thisDay->date.day,
-               repBeingPaid->id, units, unitOnboardingFee, customer );
-        }
-
-      if( unitsToAdd==0 )
-        {
-        Event( ".. %04d-%02d-%02d org %d already has target number of units",
-               thisDay->date.year, thisDay->date.month, thisDay->date.day,
-               customer );
-        }
-      else
-        {
-        revenue += unitOnboardingFee * unitsToAdd;
-        Event( ".. %04d-%02d-%02d %s adding %d units at %.1lf onboarding fee to org %d",
-               thisDay->date.year, thisDay->date.month, thisDay->date.day,
-               repBeingPaid->id, unitsToAdd, unitOnboardingFee, targetOrg->number );
-        }
-
-      revenue += unitMonthlyFee * units;
-      Event( ".. %04d-%02d-%02d %s maintained %d units at %.1lf subscription fee to org %d",
-             thisDay->date.year, thisDay->date.month, thisDay->date.day,
-             repBeingPaid->id, units, unitMonthlyFee, customer );
 
       units += unitsToAdd;
+
+      revenue = 0;
+      if( unitsToAdd > 0 )
+        {
+        revenue += unitOnboardingFee * unitsToAdd;
+        Event( ".. %04d-%02d-%02d %s sold %d additional units at %.1lf onboarding fee to org %d",
+               thisDay->date.year, thisDay->date.month, thisDay->date.day,
+               repID, unitsToAdd, unitOnboardingFee, customer );
+        }
+
+      if( units > 0 )
+        {
+        revenue += unitMonthlyFee * units;
+        Event( ".. %04d-%02d-%02d %s maintained %d units at %.1lf subscription fee to org %d",
+               thisDay->date.year, thisDay->date.month, thisDay->date.day,
+               repID, units, unitMonthlyFee, customer );
+        }
+
       if( thisDay->month ) /* track stats for the month */
         SetMonthlyUnits( conf, thisDay->month, product, targetOrg, units );
-      else
-        printf( "added %d units but cannot set summary record\n", unitsToAdd );
       }
 
     double actualRevenue = revenue;
     if( conf->percentageForPaymentProcessing>0 )
       actualRevenue *= (100.0 - conf->percentageForPaymentProcessing)/100.0;
 
-    repBeingPaid = salesRep;
     _SINGLE_DAY* payDay = thisDay;
-    // Notice( "payDay for %s initially on %d", repBeingPaid->id, payDay - repBeingPaid->workDays );
 
     int nDays = 0;
-    if( conf->averageCollectionsDelayDays>0 && conf->sdevCollectionsDelayDays>0 )
+    if( conf->averageCollectionsDelayDays>0 && conf->sdevCollectionsDelayDays>=0 )
       {
       nDays = (int)RandN2( conf->averageCollectionsDelayDays, conf->sdevCollectionsDelayDays );
-      if( payDay + nDays < repLastDay )
-        payDay += nDays;
-      else
+      payDay += nDays;
+      }
+
+    /* switch pay day to customer care if it's past end of life for the original rep */
+    if( payDay >= repLastDay )
+      {
+      if( repBeingPaid != conf->customerCare )
         {
+        Event( ".. %04d-%02d-%02d Switching rep to customer care",
+               thisDay->date.year, thisDay->date.month, thisDay->date.day );
         repBeingPaid = conf->customerCare;
-        _MMDD payDate;
-        payDate.year = thisDay->date.year;
-        payDate.month = thisDay->date.month;
-        payDate.day = thisDay->date.day;
-        time_t payTime = MMDDToTime( &payDate );
-        payTime += nDays * DAY_IN_SECONDS;
-        if( TimeToMMDD( payTime, &payDate ) != 0 )
-          Error( "Failed to convert time to date (XX)" );
-        if( repBeingPaid->workDays==NULL )
-          Warning( "Sales rep has no workdays defined - that's likely a software bug!" );
-        payDay = FindSingleDay( &payDate, repBeingPaid->workDays, repBeingPaid->nWorkDays );
-        if( payDay!=NULL )
-          Notice( "Payday reassigned to %s (on day %d)", repBeingPaid->id, payDay - repBeingPaid->workDays );
-        else
-          Notice( "Payday reassigned to %s (on day NULL - %04d-%02d-%02d)",
-                  repBeingPaid->id, payDate.year, payDate.month, payDate.day );
+        repLastDay = repBeingPaid->endOfWorkDays;
+
+        /* switch over our date pointers to use customer care's array */
+        for( _SINGLE_DAY* trialDate = repBeingPaid->workDays;
+             trialDate < repBeingPaid->endOfWorkDays;
+             ++trialDate )
+          {
+          if( SameDay( &(trialDate->date), &(payDay->date) )==0 )
+            {
+            payDay = trialDate;
+            break;
+            }
+          }
         }
       }
 
-    // Notice( "repBeingPaid=%s, salesRep=%s Q=%d", repBeingPaid->id, salesRep->id, payDay >= repLastDay );
-    if( ( repBeingPaid==salesRep && payDay >= repLastDay ) /* rep gone */
-        /* || payDay->date.year==0 also rep gone (weird state) */
-        || ( salesRep->class!=NULL
-             && salesRep->class->commissionMonths>0
-             && monthNo >= salesRep->class->commissionMonths ) /* account moves to CC pool */ )
-      { /* rep is gone, company still get paid though */
-      Event( "Payday beyond %s last day or past commission window", salesRep->id );
-      repBeingPaid = conf->customerCare;
-      _MMDD payDate;
-      payDate.year = thisDay->date.year;
-      payDate.month = thisDay->date.month;
-      payDate.day = thisDay->date.day;
-      time_t payTime = MMDDToTime( &payDate );
-      payTime += nDays * DAY_IN_SECONDS;
-      if( TimeToMMDD( payTime, &payDate ) != 0 )
-        Error( "Failed to convert time to date (XX)" );
-      payDay = FindSingleDay( &payDate, repBeingPaid->workDays, repBeingPaid->nWorkDays );
-      // Event( "Payday reassigned to %s (on day %d)", repBeingPaid->id, payDay - repBeingPaid->workDays );
+    /* possibly we've over-extended even customer care?  exit then. */
+    if( payDay >= repBeingPaid->endOfWorkDays )
+      {
+      Event( "%04d-%02d-%02d Cannot pay beyond %s last day",
+             thisDay->date.year, thisDay->date.month, thisDay->date.day,
+             repBeingPaid->id );
+      break;
       }
 
-    if( payDay!=NULL )
-      { /* not past end of sim */
-      if( payDay >= repBeingPaid->endOfWorkDays )
-        Warning( "Pay day for %s past rep last day", repBeingPaid->id );
 
-      payDay->dailySales = NewRevenueEvent( conf, payDay->date, customer, repBeingPaid, monthNo, actualRevenue, payDay->dailySales );
+    /* revenue happens regardless of who the rep now is */
+    payDay->dailySales = NewRevenueEvent( conf, payDay->date, customer, repBeingPaid, monthNo, actualRevenue, payDay->dailySales );
 
-      if( repBeingPaid == salesRep
-          && salesRep->class!=NULL )
-        {
-        payDay->fees = NewPayEvent( conf, payDay->date, salesRep, pt_commission, revenue * salesRep->class->commission / 100.0, payDay->fees );
-        Event( ".. %04d-%02d-%02d Rep %s gets paid %.1lf for %.1lf in sales to customer %d (month %d of deal)",
-               payDay->date.year, payDay->date.month, payDay->date.day,
-               salesRep->id, payDay->fees->amount, payDay->dailySales->revenue, customer, monthNo );
-        }
-      else
-        {
-        Event( ".. %04d-%02d-%02d customer care revenue of %.1lf from customer %d (month %d of deal)",
-               payDay->date.year, payDay->date.month, payDay->date.day,
-               payDay->dailySales->revenue, customer, monthNo );
-        }
+    /*
+    Event( ".. %04d-%02d-%02d repBeingPaid=%s salesRep=%s salesRep->class=%s monthNo=%d repBeingPaid->class->commissionMonths=%d",
+            payDay->date.year, payDay->date.month, payDay->date.day,
+            ( repBeingPaid==NULL || EMPTY( repBeingPaid->id ) ) ? "nil" : repBeingPaid->id,
+            ( salesRep==NULL || EMPTY( salesRep->id ) ) ? "nil" : salesRep->id,
+            ( salesRep==NULL || salesRep->class==NULL || EMPTY( salesRep->class->id ) ) ? "nil" : salesRep->class->id,
+            monthNo,
+            repBeingPaid->class==NULL ? -1 : repBeingPaid->class->commissionMonths );
+    */
+
+    /* pay commission if it's the original sales rep, and we have not overrun
+       the number of commission months */
+    if( repBeingPaid==salesRep
+        && salesRep->class!=NULL 
+        && monthNo < repBeingPaid->class->commissionMonths )
+      {
+      payDay->fees = NewPayEvent( conf, payDay->date, salesRep, pt_commission, revenue * salesRep->class->commission / 100.0, payDay->fees );
+      Event( ".. %04d-%02d-%02d Rep %s gets paid %.1lf for %.1lf in sales to customer %d (month %d of deal)",
+             payDay->date.year, payDay->date.month, payDay->date.day,
+             salesRep->id, payDay->fees->amount, payDay->dailySales->revenue, customer, monthNo );
+      }
+    else
+      {
+      Event( ".. %04d-%02d-%02d Nobody gets commission on revenue of %.1lf from customer %d (month %d of deal)",
+             payDay->date.year, payDay->date.month, payDay->date.day,
+             payDay->dailySales->revenue, customer, monthNo );
       }
 
     /* monthly growth */
@@ -392,141 +353,33 @@ void CloseSingleSale( _CONFIG* conf,
         revenue *= monthlyGrowthRate;
       }
 
-    lastRevenueDay = thisDay;
+    _SINGLE_DAY* lastGoodDay = thisDay;
     thisDay = FindThisDateNextMonth( thisDay, repLastDay, NULL );
-    }
 
-  /* continue revenue with customer care */
-  if( ! lostCustomer )
-    {
-    /* find the equivalent _SINGLE_DAY to the last revenue date from the rep, but in the customer care array */
-    thisDay = FindSingleDay( &(lastRevenueDay->date), conf->customerCare->workDays, conf->customerCare->nWorkDays );
-    if( thisDay==NULL )
-      { /* hopefully this doesn't actually happen.  it would be odd */
-      Warning( "Tried to hand-off sale from %s at %04d-%02d-%02d to %s but failed to find start date (A)",
-               salesRep->id,
-               lastRevenueDay->date.year, lastRevenueDay->date.month, lastRevenueDay->date.day,
-               conf->customerCare->id );
-      }
-    /*
-    if( thisDay!=NULL )
-      Event( "thisDay moves to CC and starts at %04d-%02d-%02d", thisDay->date.year, thisDay->date.month, thisDay->date.day );
-    */
-
-    /* now look forward to the same day-of-month but one month later in the customer care array: */
-    repLastDay = conf->customerCare->endOfWorkDays;
-    time_t targetDateTime = 0;
-    thisDay = FindThisDateNextMonth( thisDay, repLastDay, &targetDateTime );
-    if( thisDay==NULL )
-      { /* probably just too late in the sim */
-      if( targetDateTime < conf->simulationEnd )
-        { /* only warn if we didn't pass the end of the sim */
-        Warning( "Tried to hand-off sale from %s at %04d-%02d-%02d to %s but failed to find start date (B)",
-                 salesRep->id,
-                 lastRevenueDay->date.year, lastRevenueDay->date.month, lastRevenueDay->date.day,
-                 conf->customerCare->id );
-        return;
-        }
-      }
-    /*
-    else
-      Event( "thisDay incremented at CC and starts at %04d-%02d-%02d", thisDay->date.year, thisDay->date.month, thisDay->date.day );
-    */
-
-    while( thisDay!=NULL )
+    /* couldn't find the next date, but perhaps we have yet to transition to customer care? */
+    if( thisDay==NULL && repBeingPaid != conf->customerCare )
       {
-      // Event( "Checking if customer %d lost at %04d-%02d-%02d (%.2lf odds)", customer, thisDay->date.year, thisDay->date.month, thisDay->date.day, product->probabilityOfCustomerAttritionPerMonth );
-
-      if( PercentProbabilityEvent( product->probabilityOfCustomerAttritionPerMonth ) )
-        {
-        Event( "Customer %d lost at month %04d-%02d (%d)", customer, thisDay->date.year, thisDay->date.month, monthNo );
-
-        if( thisDay->month )
-          {
-          ++ (thisDay->month->nLosses);
-          }
-
-        if( targetOrg != NULL )
-          OrgAttrition( conf, targetOrg, thisDay->t );
-
-        lostCustomer = 1;
-
-        break; /* lost the customer */
-        }
-      else
-        {
-        ++ (conf->nCustomerMonths);
-        ++ monthNo;
-        if( thisDay->month )
-          ++ (thisDay->month->nCustomers);
-        }
-
-      /* calculate revenue based on number of units */
-      if( product->priceByUnits )
-        {
-        int unitsToAdd = 0;
-
-        if( productFixedMonthlyUnitsGrowth > 0 )
-          {
-          if( units < finalUnits )
-            {
-            unitsToAdd = productFixedMonthlyUnitsGrowth;
-            }
-          }
-        else
-          {
-          if( monthNo <= monthsToSteadyState )
-            unitsToAdd = (int)round((units * monthlyGrowthRate) - units);
-          }
-
-        revenue = 0;
-        if( firstUnit )
-          {
-          firstUnit = 0;
-          revenue += unitOnboardingFee * units;
-          Event( "... %04d-%02d-%02d %s sold %d units at %.1lf onboarding fee to org %d",
-                 thisDay->date.year, thisDay->date.month, thisDay->date.day,
-                 conf->customerCare->id, units, unitOnboardingFee, customer );
-          }
-
-        if( unitsToAdd==0 )
-          {
-          Event( "... %04d-%02d-%02d org %d already has target number of units",
-                 thisDay->date.year, thisDay->date.month, thisDay->date.day,
-                 customer );
-          }
-        else
-          {
-          revenue += unitOnboardingFee * unitsToAdd;
-          Event( "... %04d-%02d-%02d %s adding %d units at %.1lf onboarding fee to org %d",
-                 thisDay->date.year, thisDay->date.month, thisDay->date.day,
-                 conf->customerCare->id, unitsToAdd, unitOnboardingFee, targetOrg->number );
-          }
-
-        revenue += unitMonthlyFee * units;
-        Event( "... %04d-%02d-%02d %s maintained %d units at %.1lf subscription fee to org %d",
-               thisDay->date.year, thisDay->date.month, thisDay->date.day,
-               conf->customerCare->id, units, unitMonthlyFee, customer );
-
-        units += unitsToAdd;
-        if( thisDay->month ) /* track stats for the month */
-          SetMonthlyUnits( conf, thisDay->month, product, targetOrg, units );
-        else
-          printf( "added %d units but cannot set summary record\n", unitsToAdd );
-        }
-
-      thisDay->dailySales = NewRevenueEvent( conf, thisDay->date, customer, conf->customerCare, monthNo, revenue, thisDay->dailySales );
-
-      Event( ".. %04d-%02d-%02d customer care revenue of %.1lf from customer %d (month %d of deal)",
-             thisDay->date.year, thisDay->date.month, thisDay->date.day,
-             thisDay->dailySales->revenue, customer, monthNo );
-
-      if( revenue < finalRevenue )
-        revenue *= monthlyGrowthRate;
-
-      thisDay = FindThisDateNextMonth( thisDay, repLastDay, NULL );
+      Event( ".. reached end of available dates for %s", repID );
+      thisDay = FindSingleDay( &(lastGoodDay->date),
+                               conf->customerCare->workDays,
+                               conf->customerCare->nWorkDays );
       if( thisDay==NULL )
-        Event( "Customer %d ran out of time in the simulation on month %d", customer, monthNo );
+        {
+        Event( ".. next customer care date (after %04d-%02d-%02d) not found.  Ending this sale.",
+               lastGoodDay->date.year, lastGoodDay->date.month, lastGoodDay->date.day );
+        break;
+        }
+      repBeingPaid = conf->customerCare;
+      repLastDay = repBeingPaid->endOfWorkDays;
+      repID = repBeingPaid->id;
+      thisDay = FindThisDateNextMonth( thisDay, repLastDay, NULL );
+      }
+
+    if( thisDay==NULL )
+      {
+      Event( ".. %s date following %04d-%02d-%02d not found.  Ending this sale.",
+             repID, lastGoodDay->date.year, lastGoodDay->date.month, lastGoodDay->date.day );
+      break;
       }
     }
   }

@@ -83,6 +83,14 @@ int ValidateSingleProduct( _PRODUCT* p )
     }
   else
     {
+    if( p->monthlyGrowthRatePercent <= 0
+        || p->averageMonthsToReachSteadyState <= 0 )
+      {
+      Warning( "Product %s not priced by units, but"
+               " months to steady state or monthly growth rate not calculated.",
+                p->id );
+      }
+
     if( p->averageMonthlyDealSize<=0 )
       {
       Warning( "Product %s has no monthly average deal size", p->id );
@@ -114,13 +122,13 @@ int ValidateSingleProduct( _PRODUCT* p )
   if( p->averageMonthsToReachSteadyState<=0 && ! doingUnitGrowth )
     {
     Warning( "Product %s has no # of months to reach per-deal revenue steady state", p->id );
-    return -5;
+    /* return -5; */
     }
 
   if( p->sdevMonthsToReachSteadyState<=0 && ! doingUnitGrowth )
     {
     Warning( "Product %s has no # of months to reach per-deal revenue steady state", p->id );
-    return -6;
+    /* return -6; */
     }
 
   if( p->probabilityOfCustomerAttritionPerMonth<=0 )

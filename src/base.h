@@ -17,6 +17,7 @@ typedef struct _salesRep _SALES_REP;
 #define MAX_SIMULATION_DAYS 10000
 #define DEFAULT_DAYS_TO_AUTO_REPLACE_SALES_REP 14
 #define DEFAULT_DAYS_TO_AUTO_REPLACE_SALES_REP_SDEV 3
+#define DEFAULT_COMMISSION_MONTHS 99
 
 #include "cash-event.h"
 #include "org.h"
