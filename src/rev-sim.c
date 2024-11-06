@@ -125,14 +125,14 @@ int main( int argc, char** argv )
   double carryForwardCashBalance = 0;
 
   /* Simulate sales to existing customers identified as initial revenue per product: */
-  _SINGLE_DAY* startDay = FindSingleDay( &(conf->simulationFirstDay), conf->baselineWorkDays, conf->nBaselineWorkDays );
+  _SINGLE_DAY* startDay = FindSingleDay( &(conf->simulationFirstDay), conf->customerCare->workDays, conf->customerCare->nWorkDays );
   if( startDay==NULL ) Error( "Failed to find _SINGLE_DAY for start of simulation" );
 
   time_t lastGoodDayInSimulation = conf->simulationEnd - 24 * 60 * 60;
   _MMDD lastGoodDay = {0};
   if( TimeToMMDD( lastGoodDayInSimulation, &lastGoodDay )!=0 )
     Error( "Failed to convert last good day to MMDD" );
-  _SINGLE_DAY* endDay = FindSingleDay( &lastGoodDay, conf->baselineWorkDays, conf->nBaselineWorkDays );
+  _SINGLE_DAY* endDay = FindSingleDay( &lastGoodDay, conf->customerCare->workDays, conf->customerCare->nWorkDays );
   if( endDay==NULL ) Error( "Failed to find _SINGLE_DAY for end of simulation" );
 
   for( _PRODUCT* p = conf->products; p!=NULL; p=p->next )

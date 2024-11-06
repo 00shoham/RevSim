@@ -205,7 +205,9 @@ void CloseSingleSale( _CONFIG* conf,
   int monthNo = 0;
   _SALES_REP* repBeingPaid = salesRep;
 
-  while( thisDay!=NULL && thisDay < repBeingPaid->endOfWorkDays )
+  while( thisDay != NULL
+         && repBeingPaid != NULL
+         && thisDay < repBeingPaid->endOfWorkDays )
     {
     char* repID = "(nobody)";
     if( repBeingPaid!=NULL && NOTEMPTY( repBeingPaid->id ) )
@@ -279,6 +281,15 @@ void CloseSingleSale( _CONFIG* conf,
       {
       nDays = (int)RandN2( conf->averageCollectionsDelayDays, conf->sdevCollectionsDelayDays );
       payDay += nDays;
+      if( payDay < repLastDay )
+        Event( ".. revenue event was on %04d-%02d-%02d but pay day delayed by %d days to %04d-%02d-%02d",
+                 thisDay->date.year, thisDay->date.month, thisDay->date.day,
+                 nDays,
+                 payDay->date.year, payDay->date.month, payDay->date.day );
+      else
+        Event( ".. revenue event was on %04d-%02d-%02d but pay day delayed by %d days to (too late for this rep)",
+                 thisDay->date.year, thisDay->date.month, thisDay->date.day,
+                 nDays );
       }
 
     /* switch pay day to customer care if it's past end of life for the original rep */
@@ -288,8 +299,12 @@ void CloseSingleSale( _CONFIG* conf,
         {
         Event( ".. %04d-%02d-%02d Switching rep to customer care",
                thisDay->date.year, thisDay->date.month, thisDay->date.day );
+        int thisDayNumber = thisDay - repBeingPaid->workDays;
+        int payDayNumber = payDay - repBeingPaid->workDays;
         repBeingPaid = conf->customerCare;
         repLastDay = repBeingPaid->endOfWorkDays;
+        payDay = repBeingPaid->workDays + payDayNumber; /* switch it to point into the new array */
+        thisDay = repBeingPaid->workDays + thisDayNumber;
 
         /* switch over our date pointers to use customer care's array */
         for( _SINGLE_DAY* trialDate = repBeingPaid->workDays;
