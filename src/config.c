@@ -887,8 +887,8 @@ int ProcessKeywordPair( _CONFIG* config, char* variable, char* value )
     if( config->salesReps==NULL )
       Error( "CONFIG: %s must follow SALES_REP", variable );
     double d = atof( value );
-    if( d>1000000 )
-      Error( "CONFIG: %s cannot exceed 1000000", variable );
+    if( d>100000000 )
+      Error( "CONFIG: %s cannot exceed 100000000", variable );
     if( d<1 )
       Warning( "CONFIG: %s == %s --- unpaid worker?", variable, value );
     config->salesReps->annualPay = d;
@@ -1550,8 +1550,10 @@ void ValidateConfig( _CONFIG* config )
     }
   free( stageArray );
 
+  /* not true - at least one per product...
   if( nStagesNoDeps!=1 )
     Error( "There must be exactly one SALES_STAGE with no predecessor" );
+  */
 
   for( _PRODUCT* p = config->products; p!=NULL; p=p->next )
     {

@@ -193,7 +193,11 @@ void CloseSingleSale( _CONFIG* conf,
                                                          product->sdevMonthlyGrowthRateUnits ) );
     }
 
-  Event( "Win at customer %d", customer );
+  char* prodID = "(unknown)";
+  if( product!=NULL && NOTEMPTY( product->id ) )
+    prodID = product->id;
+
+  Event( "Win selling %s at customer %d", prodID, customer );
   if( product->priceByUnits )
     {
     Event( ".. unitOnboardingFee = %.1lf", unitOnboardingFee );
