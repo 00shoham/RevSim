@@ -91,7 +91,8 @@ void CloseSingleSale( _CONFIG* conf,
                       _SINGLE_DAY* repFirstDay,
                       _SINGLE_DAY* repLastDay,
                       _PRODUCT* product,
-                      double overrideRevenue )
+                      double overrideRevenue,
+                      int overrideUnits )
   {
   if( conf==NULL )
     return;
@@ -105,6 +106,19 @@ void CloseSingleSale( _CONFIG* conf,
     return;
   if( product==NULL )
     return;
+
+  if( repFirstDay >= salesRep->workDays
+      && repFirstDay <= salesRep->endOfWorkDays )
+    {}
+  else
+    Warning( "CloseSingleSale() with repFirstDay not within salesRep range" );
+
+  if( repLastDay >= salesRep->workDays
+      && repLastDay <= salesRep->endOfWorkDays )
+    {}
+  else
+    Warning( "CloseSingleSale() with repLastDay not within salesRep range" );
+
   /* note that targetOrg is permitted to be NULL */
 
   Event( "CloseSingleSale( rep=%s, firstDay=%04d-%02d-%02d, lastDay(-1)=%04d-%02d-%02d",
@@ -132,23 +146,29 @@ void CloseSingleSale( _CONFIG* conf,
   double monthlyGrowthRate = 1.0 + product->monthlyGrowthRatePercent/100.0;
   int monthsToSteadyState = RandN2( product->averageMonthsToReachSteadyState, product->sdevMonthsToReachSteadyState );
 
-  int initialUnits = 0;
-  int finalUnits = 0;
+  int initialUnits = overrideUnits;
+  int finalUnits = overrideUnits;
   double unitOnboardingFee = 0.0;
   double unitMonthlyFee = 0.0;
 
   if( overrideRevenue>0 )
-    {
+    { /* pre-specified pricing.  likely initial revenue for the sim. */
     if( product->priceByUnits )
-      Error( "Cannot set initial revenue on product sold by units %s", product->id );
-
-    finalRevenue = overrideRevenue;
-    monthsToSteadyState = 0;
-    monthlyGrowthRate = 0;
-    initialRevenue = overrideRevenue; 
+      {
+      unitMonthlyFee = overrideRevenue;
+      monthsToSteadyState = 0;
+      monthlyGrowthRate = 0;
+      }
+    else
+      {
+      finalRevenue = overrideRevenue;
+      monthsToSteadyState = 0;
+      monthlyGrowthRate = 0;
+      initialRevenue = overrideRevenue; 
+      }
     }
   else
-    {
+    { /* random pricing */
     if( product->priceByUnits )
       {
       finalUnits = (int)(round( RandN2( product->averageCustomerSizeUnits, product->sdevCustomerSizeUnits ) ));
@@ -169,7 +189,6 @@ void CloseSingleSale( _CONFIG* conf,
   int productFixedMonthlyUnitsGrowth = 0;
   if( product->averageMonthlyGrowthRateUnits>0 )
     {
-    initialUnits = 0;
     productFixedMonthlyUnitsGrowth = (int)round( RandN2( product->averageMonthlyGrowthRateUnits,
                                                          product->sdevMonthlyGrowthRateUnits ) );
     }
@@ -593,6 +612,7 @@ int SimulateInitialCall( _CONFIG* conf,
                        thisDay,
                        repLastDay,
                        product,
+                       0,
                        0 );
 
       return 0;

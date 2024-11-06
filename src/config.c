@@ -502,8 +502,8 @@ int ProcessKeywordPair( _CONFIG* config, char* variable, char* value )
     if( ! config->products->priceByUnits )
       Error( "CONFIG: %s must follow PRODUCT where PRODUCT_PRICE_BY_UNITS is set to true", variable );
     double d = atof( value );
-    if( d<1 )
-      Error( "Invalid PRODUCT_M_UNITS_GROWTH_AVG (%s) - must be at least 1", value );
+    if( d<0 )
+      Error( "Invalid PRODUCT_M_UNITS_GROWTH_AVG (%s) - must be at least 0", value );
     config->products->averageMonthlyGrowthRateUnits = d;
     if( config->products->monthlyGrowthRatePercent > 0 )
       Error( "Variable %s conflicts with PRODUCT_M_GROWTH_RATE_PERCENT", variable );
@@ -517,8 +517,8 @@ int ProcessKeywordPair( _CONFIG* config, char* variable, char* value )
     if( ! config->products->priceByUnits )
       Error( "CONFIG: %s must follow PRODUCT where PRODUCT_PRICE_BY_UNITS is set to true", variable );
     double d = atof( value );
-    if( d<1 )
-      Error( "Invalid PRODUCT_M_UNITS_GROWTH_SDEV (%s) - must be at least 1", value );
+    if( d<0 )
+      Error( "Invalid PRODUCT_M_UNITS_GROWTH_SDEV (%s) - must be at least 0", value );
     config->products->sdevMonthlyGrowthRateUnits = d;
     return 0;
     }
@@ -607,6 +607,19 @@ int ProcessKeywordPair( _CONFIG* config, char* variable, char* value )
     if( n<1 )
       Error( "Initial monthly number of customers for %s must be at least one...", config->products->id );
     config->products->initialMonthlyCustomers = n;
+    return 0;
+    }
+
+  if( strcasecmp( variable, "PRODUCT_INITIAL_MONTHLY_UNITS" )==0 )
+    {
+    if( config->products==NULL )
+      Error( "CONFIG: %s must follow PRODUCT", variable );
+    if( ! config->products->priceByUnits )
+      Error( "CONFIG: %s must follow PRODUCT where PRODUCT_PRICE_BY_UNITS is set to true", variable );
+    int n = atoi( value );
+    if( n<1 )
+      Error( "Initial monthly number of units for %s must be at least one...", config->products->id );
+    config->products->initialMonthlyUnits= n;
     return 0;
     }
 

@@ -10,6 +10,7 @@ void CloseSingleSale( _CONFIG* conf,
                       _SINGLE_DAY* repFirstDay,
                       _SINGLE_DAY* repLastDay,
                       _PRODUCT* product,
-                      double overrideRevenue );
+                      double overrideRevenue,
+                      int overrideUnits );
 
 #endif

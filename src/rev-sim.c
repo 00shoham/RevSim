@@ -137,19 +137,41 @@ int main( int argc, char** argv )
 
   for( _PRODUCT* p = conf->products; p!=NULL; p=p->next )
     {
-    if( p->initialMonthlyRevenue<=0 )
-      continue;
-    if( p->initialMonthlyCustomers<1 )
-      continue;
-    double avgRevenuePerCustomer = p->initialMonthlyRevenue
-                                 / (double)p->initialMonthlyCustomers;
-    printf( "Calculating %s revenue from initial customers ($%.1lf/customer, %d customers)\n",
-            p->id, avgRevenuePerCustomer, p->initialMonthlyCustomers );
-    for( int custNo = 0; custNo < p->initialMonthlyCustomers; ++custNo )
-      {
-      CloseSingleSale( conf, conf->customerCare, NULL,
-                       startDay, endDay,
-                       p, avgRevenuePerCustomer );
+    if( ! p->priceByUnits
+        && p->initialMonthlyRevenue>0
+        && p->initialMonthlyCustomers>0 )
+      { /* initial revenue not by units */
+      double avgRevenuePerCustomer = p->initialMonthlyRevenue
+                                   / (double)p->initialMonthlyCustomers;
+      printf( "Calculating %s revenue from initial customers ($%.1lf/customer, %d customers)\n",
+              p->id, avgRevenuePerCustomer, p->initialMonthlyCustomers );
+      for( int custNo = 0; custNo < p->initialMonthlyCustomers; ++custNo )
+        {
+        CloseSingleSale( conf, conf->customerCare, NULL,
+                         startDay, endDay,
+                         p, avgRevenuePerCustomer, 0 );
+        }
+      }
+    else if( p->priceByUnits
+             && p->initialMonthlyUnits>0
+             && p->initialMonthlyRevenue>0
+             && p->initialMonthlyCustomers>0 )
+      { /* initial revenue by units */
+      double avgRevenuePerCustomer = p->initialMonthlyRevenue
+                                   / (double)p->initialMonthlyCustomers;
+      int unitsPerCustomer = round((double)p->initialMonthlyUnits
+                              / (double)p->initialMonthlyCustomers );
+      if( unitsPerCustomer<1 )
+        unitsPerCustomer = 1;
+      for( int custNo = 0; custNo < p->initialMonthlyCustomers; ++custNo )
+        {
+        CloseSingleSale( conf, conf->customerCare, NULL,
+                         startDay, endDay,
+                         p, avgRevenuePerCustomer, unitsPerCustomer );
+        }
+      }
+    else
+      { /* neither - so no initial revenue calculation. */
       }
     }
 

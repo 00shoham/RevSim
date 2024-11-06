@@ -50,7 +50,7 @@ int ValidateSingleProduct( _PRODUCT* p )
 
   if( p->priceByUnits )
     {
-    if( p->averageUnitOnboardingFee==0 && p->sdevUnitOnboardingFee>=0 )
+    if( p->averageUnitOnboardingFee==0 && p->sdevUnitOnboardingFee>0 )
       {
       Warning( "Product %s - average onboarding fee 0 but sdev not zero", p->id );
       return -20;
@@ -75,11 +75,13 @@ int ValidateSingleProduct( _PRODUCT* p )
       Warning( "Product %s - monthly deal size is not compatible with price-by-units", p->id );
       return -24;
       }
+    /* we can do this!
     if( p->initialMonthlyRevenue>0 || p->initialMonthlyCustomers>0 )
       {
       Warning( "Product %s - initial revenue or customer count not permitted when simulating unit-based pricing", p->id );
       return -25;
       }
+    */
     }
   else
     {
@@ -111,11 +113,11 @@ int ValidateSingleProduct( _PRODUCT* p )
     return -30;
     }
 
-  int doingUnitGrowth = p->priceByUnits && p->averageMonthlyGrowthRateUnits > 0;
+  int doingUnitGrowth = p->priceByUnits && (p->averageMonthlyGrowthRateUnits > 0);
 
-  if( p->monthlyGrowthRatePercent<=0 && ! doingUnitGrowth )
+  if( p->monthlyGrowthRatePercent<0 && doingUnitGrowth )
     {
-    Warning( "Product %s has no monthly per-deal revenue growth rate", p->id );
+    Warning( "Product %s has negative monthly per-deal revenue growth rate", p->id );
     return -4;
     }
 

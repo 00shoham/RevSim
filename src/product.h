@@ -28,6 +28,7 @@ typedef struct _product
 
   double initialMonthlyRevenue;
   int initialMonthlyCustomers;
+  int initialMonthlyUnits;
 
   int nSalesStages;
   _SALES_STAGE** stageArray;
