@@ -382,8 +382,16 @@ void PrintCounters( FILE* f, _CONFIG* conf )
 
 void SetMonthlyUnits( _CONFIG* conf, _MONTHLY_SUMMARY* month, _PRODUCT* p, _ORG* o, int n )
   {
-  if( month==NULL || p==NULL || o==NULL )
-    Error( "AddMonthlyUnits() - NULL arguments" );
+  if( month==NULL )
+    Error( "AddMonthlyUnits() - NULL month" );
+
+  if( p==NULL )
+    Error( "AddMonthlyUnits() - NULL product" );
+
+  /*
+  if( o==NULL )
+    Error( "AddMonthlyUnits() - NULL org" );
+  */
 
   _MONTHLY_UNITS* mu = (_MONTHLY_UNITS*)SafeCalloc( 1, sizeof(_MONTHLY_UNITS), "Monthly units struct" );
   mu->product = p;
