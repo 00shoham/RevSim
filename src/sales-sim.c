@@ -431,7 +431,7 @@ int SimulateInitialCall( _CONFIG* conf,
   {
   int nDaysToNextStage = 0;
 
-  // Notice( "SimulateInitialCall( rep=%s, thisDay=%d )", salesRep->id, thisDay - salesRep->workDays );
+  Notice( "SimulateInitialCall( rep=%s, thisDay=%d, product=%s )", salesRep->id, thisDay - salesRep->workDays, product->id );
 
   if( conf->marketSize>0 /* unlimited */
       && conf->nAvailableOrgs<=0 )
@@ -817,15 +817,15 @@ void SimulateCalls( _CONFIG* conf, int dayNo, time_t tSim )
   for( _SALES_REP* s = conf->salesReps; s!=NULL; s=s->next )
     {
     if( s->class==NULL )
-      continue;
+      { Event( "Rep %s has no class - skipping", NULLPROTECT( s->id ) ); continue; }
     if( s->class->salaryOnly )
-      continue;
+      { Event( "Rep %s in class %s is only salaried - does not make calls - skipping", NULLPROTECT( s->id ), NULLPROTECT( s->class->id ) ); continue; }
     if( ! s->class->initiateCalls )
-      continue;
+      { Event( "Rep %s in class %s does not initiate calls - skipping", NULLPROTECT( s->id ), NULLPROTECT( s->class->id ) ); continue; }
 
     _SINGLE_DAY* repDay = FindRepDay( s, tSim, &theDay );
     if( repDay==NULL )
-      continue;
+      { Event( "Rep %s -- cannot find this date in their schedule", s->id ); continue; }
     if( repDay->working==0 )
       {
       Event( "%s not working on %04d-%02d-%02d.", s->id, repDay->date.year, repDay->date.month, repDay->date.day );

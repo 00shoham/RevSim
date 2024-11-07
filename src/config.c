@@ -871,6 +871,8 @@ int ProcessKeywordPair( _CONFIG* config, char* variable, char* value )
         t2 = config->simulationEnd;
       if( TimeToMMDD( t2, &(r->lastDay) )!=0 )
         Error( "Failed to set end date for rep %s", r->id );
+      Notice( "Rep %s assigned a random end date of %04d-%02d-%02d",
+              r->id, r->lastDay.year, r->lastDay.month, r->lastDay.day );
       }
     else
       {
