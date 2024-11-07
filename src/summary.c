@@ -456,7 +456,9 @@ void UnitsReport( FILE* f, _CONFIG* conf )
           }
         }
 
-      int avg = (int)round((double)nUnits / (double)nOrgs);
+      int avg = -1;
+      if( nOrgs>0 )
+        avg = (int)round((double)nUnits / (double)nOrgs);
       fprintf( f, "  %s: %d units at %d customers (average %d/customer)\n", p->name, nUnits, nOrgs, avg );
       }
     }
