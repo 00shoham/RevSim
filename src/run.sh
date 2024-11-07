@@ -1,3 +1,3 @@
 #!/bin/sh
 
-./rev-sim -c config-by-unit.ini -o output.txt -e events.txt -k counters.txt -s daily-cash.txt -u units.txt
+./rev-sim -c config-multi-product.ini -o /tmp/output.txt -e /tmp/events.txt -k /tmp/counters.txt -s /tmp/daily-cash.txt -u /tmp/units.txt
