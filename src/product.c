@@ -189,6 +189,30 @@ void PrintProduct( FILE* f, _PRODUCT* p )
     fprintf( f, "PRODUCT_INITIAL_MONTHLY_CUSTOMERS=%d\n", p->initialMonthlyCustomers );
     }
 
+  if( p->priceByUnits )
+    {
+    fprintf( f, "PRODUCT_PRICE_BY_UNITS=true\n" );
+    if( p->averageUnitOnboardingFee>0 )
+      fprintf( f, "PRODUCT_UNIT_ONBOARDING_FEE_AVG=%.1lf\n", p->averageUnitOnboardingFee );
+    if( p->sdevUnitOnboardingFee>0 )
+      fprintf( f, "PRODUCT_UNIT_ONBOARDING_FEE_SDEV=%.1lf\n", p->sdevUnitOnboardingFee );
+    if( p->averageUnitMonthlyRecurringFee>0 )
+      fprintf( f, "PRODUCT_UNIT_MONTHLY_FEE_AVG=%.1lf\n", p->averageUnitMonthlyRecurringFee );
+    if( p->sdevUnitMonthlyRecurringFee>0 )
+      fprintf( f, "PRODUCT_UNIT_MONTHLY_FEE_SDEV=%.1lf\n", p->sdevUnitMonthlyRecurringFee );
+    if( p->averageCustomerSizeUnits>0 )
+      fprintf( f, "PRODUCT_CUSTOMER_NUMBER_UNITS_AVG=%.1lf\n", p->averageCustomerSizeUnits );
+    if( p->sdevCustomerSizeUnits>0 )
+      fprintf( f, "PRODUCT_CUSTOMER_NUMBER_UNITS_SDEV=%.1lf\n", p->sdevCustomerSizeUnits );
+    if( p->averageMonthlyGrowthRateUnits>0 )
+      fprintf( f, "PRODUCT_M_UNITS_GROWTH_AVG=%.1lf\n", p->averageMonthlyGrowthRateUnits );
+    if( p->sdevMonthlyGrowthRateUnits>0 )
+      fprintf( f, "PRODUCT_M_UNITS_GROWTH_SDEV=%.1lf\n", p->sdevMonthlyGrowthRateUnits );
+    if( p->initialMonthlyUnits>0 )
+      fprintf( f, "PRODUCT_INITIAL_MONTHLY_UNITS=%d\n", p->initialMonthlyUnits);
+    }
+
+
   fprintf( f, "\n" );
   }
 
