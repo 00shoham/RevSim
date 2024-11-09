@@ -431,7 +431,10 @@ int SimulateInitialCall( _CONFIG* conf,
   {
   int nDaysToNextStage = 0;
 
-  Notice( "SimulateInitialCall( rep=%s, thisDay=%d, product=%s )", salesRep->id, thisDay - salesRep->workDays, product->id );
+  Event( "SimulateInitialCall( rep=%s, date=%04d-%02d-%02d, product=%s )",
+         salesRep->id,
+         thisDay->date.year, thisDay->date.month, thisDay->date.day,
+         product->id );
 
   if( conf->marketSize>0 /* unlimited */
       && conf->nAvailableOrgs<=0 )
@@ -752,24 +755,39 @@ void PaySingleRepSalary( _CONFIG* conf, _SALES_REP* s )
     AdjustSalaryLastMonth( conf, s, prevDay, salary, nDaysSinceSalary );
   }
 
-_SINGLE_DAY* FindRepDay( _SALES_REP* s, time_t theTime, _MMDD* theDay )
+/* QQQ this function is either buggy or the data structure is not properly initialized. */
+enum badDayReasons { bdr_before_start, bdr_after_end, bdr_error };
+_SINGLE_DAY* FindRepDay( _SALES_REP* s, time_t theTime, _MMDD* theDay,
+                         enum badDayReasons* reason )
   {
   if( s==NULL || theTime==0 || theDay==NULL )
+    {
+    *reason = bdr_error;
     return NULL;
+    }
 
   time_t tFirst = MMDDToTime( &(s->firstDay) );
   time_t tLast = MMDDToTime( &(s->lastDay) );
 
   if( tFirst > theTime ) /* rep hasn't started yet */
+    {
+    *reason = bdr_before_start;
     return NULL;
+    }
+
   if( tLast < theTime )  /* rep is already gone */
+    {
+    *reason = bdr_after_end;
     return NULL;
+    }
+
   int dayNo = ( theTime - tFirst ) / DAY_IN_SECONDS;
   if( dayNo < 0 || dayNo >= s->nWorkDays )
     {
     /* seems rare - just end of a given rep.  math/rounding?
        Warning( "Calculated dayNo of %d (<0 or >%d) for %s", dayNo, s->nWorkDays, s->id );
     */
+    *reason = bdr_error;
     return NULL;
     }
 
@@ -779,16 +797,17 @@ _SINGLE_DAY* FindRepDay( _SALES_REP* s, time_t theTime, _MMDD* theDay )
       && dPtr->date.day==theDay->day )
     return dPtr;
 
-  Warning( "Calculated dayNo %d (%04d-%02d-%02d) but wanted %04d-%02d-%02d for %s",
-           dayNo,
-           dPtr->date.year,
-           dPtr->date.month,
-           dPtr->date.day,
-           theDay->year,
-           theDay->month,
-           theDay->day,
-           s->id );
+  Event( "Calculated dayNo %d (%04d-%02d-%02d) but wanted %04d-%02d-%02d for %s",
+         dayNo,
+         dPtr->date.year,
+         dPtr->date.month,
+         dPtr->date.day,
+         theDay->year,
+         theDay->month,
+         theDay->day,
+         s->id );
 
+  *reason = bdr_error;
   return NULL;
   }
 
@@ -809,9 +828,14 @@ void SimulateCalls( _CONFIG* conf, int dayNo, time_t tSim )
     return;
     }
 
+  Event( "Simulating call sequences that start on on %04d-%02d-%02d", theDay.year, theDay.month, theDay.day );
+
   /* skip stat holidays up front */
   if( FallsOnHoliday( conf->holidays, &theDay )==0 )
+    {
+    Event( "%04d-%02d-%02d is a holiday - skipping.", theDay.year, theDay.month, theDay.day );
     return;
+    }
 
   /* go through all the reps */
   for( _SALES_REP* s = conf->salesReps; s!=NULL; s=s->next )
@@ -823,9 +847,24 @@ void SimulateCalls( _CONFIG* conf, int dayNo, time_t tSim )
     if( ! s->class->initiateCalls )
       { Event( "Rep %s in class %s does not initiate calls - skipping", NULLPROTECT( s->id ), NULLPROTECT( s->class->id ) ); continue; }
 
-    _SINGLE_DAY* repDay = FindRepDay( s, tSim, &theDay );
+    Event( "Call sequences starting %04d-%02d-%02d by %s",
+           theDay.year, theDay.month, theDay.day, s->id );
+
+    enum badDayReasons notFoundReason;
+    _SINGLE_DAY* repDay = FindRepDay( s, tSim, &theDay, &notFoundReason );
     if( repDay==NULL )
-      { Event( "Rep %s -- cannot find this date in their schedule", s->id ); continue; }
+      {
+      if( notFoundReason == bdr_before_start || notFoundReason == bdr_after_end )
+        { /* fine */
+        }
+      else
+        {
+        Event( "Rep %s -- cannot find %04d-%02d-%02d in their schedule",
+               s->id, theDay.year, theDay.month, theDay.day );
+        }
+      continue;
+      }
+
     if( repDay->working==0 )
       {
       Event( "%s not working on %04d-%02d-%02d.", s->id, repDay->date.year, repDay->date.month, repDay->date.day );
