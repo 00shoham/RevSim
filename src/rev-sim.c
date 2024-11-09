@@ -189,7 +189,12 @@ int main( int argc, char** argv )
     if( dayNo < conf->simulationDurationDays
         && day->date.day==1
         && day->month!=NULL )
-      day->month->nAvailableOrgs = CountAvailableOrgs( conf, tSim );
+      {
+      int nOrgs = 0;
+      for( _PRODUCT* p=conf->products; p!=NULL; p=p->next )
+        nOrgs += CountAvailableOrgs( conf, p, tSim );
+      day->month->nAvailableOrgs = nOrgs;
+      }
 
     /* if we just started a month, then add up the summaries
        from all the reps plus customer care for the previous

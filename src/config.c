@@ -113,9 +113,6 @@ void FreeConfig( _CONFIG* config )
   if( config->monthlySummary != NULL )
     FREE( config->monthlySummary );
  
-  if( config->orgs != NULL )
-    FREE( config->orgs );
-
   if( config->cashEvents != NULL )
     {
     FreeCashEventList( config->cashEvents );
@@ -961,21 +958,25 @@ int ProcessKeywordPair( _CONFIG* config, char* variable, char* value )
     return 0;
     }
 
-  if( strcasecmp( variable, "MARKET_SIZE" )==0 )
+  if( strcasecmp( variable, "PRODUCT_MARKET_SIZE" )==0 )
     {
+    if( config->products==NULL )
+      Error( "CONFIG: %s must follow PRODUCT (it is product-specific)", variable );
     int s = atoi( value );
     if( s<0 || s>MAX_MARKET_SIZE )
       Error( "CONFIG: %s must be from 1 to %d", variable, MAX_MARKET_SIZE );
-    config->marketSize = s;
+    config->products->marketSize = s;
     return 0;
     }
 
-  if( strcasecmp( variable, "ORG_COOLING_PERIOD_DAYS" )==0 )
+  if( strcasecmp( variable, "PRODUCT_ORG_COOLING_PERIOD_DAYS" )==0 )
     {
+    if( config->products==NULL )
+      Error( "CONFIG: %s must follow PRODUCT (it is product-specific)", variable );
     int d = atoi( value );
     if( d<0 || d>365 )
       Error( "CONFIG: %s must be from 1 to 365", variable );
-    config->orgCoolingPeriodDays = d;
+    config->products->orgCoolingPeriodDays = d;
     return 0;
     }
 
@@ -1177,16 +1178,6 @@ void PrintConfig( FILE* f, _CONFIG* config )
 
   if( config->sdevCollectionsDelayDays > 0 )
     fprintf( f, "COLLECTIONS_DELAY_CALENDAR_DAYS_SDEV=%.1lf\n", config->sdevCollectionsDelayDays );
-  fprintf( f, "\n" );
-
-  if( config->marketSize > 0 || config->orgCoolingPeriodDays > 0 )
-    fprintf( f, "# Variables related to saturating the target market:\n" );
-
-  if( config->marketSize > 0 )
-    fprintf( f, "MARKET_SIZE=%d\n", config->marketSize );
-
-  if( config->orgCoolingPeriodDays > 0 )
-    fprintf( f, "ORG_COOLING_PERIOD_DAYS=%d\n", config->orgCoolingPeriodDays );
   fprintf( f, "\n" );
 
   fprintf( f, "# Which rep classes can work on which sales stages?\n" );
@@ -1575,20 +1566,5 @@ void ValidateConfig( _CONFIG* config )
       Error( "Sales rep does not validate - %s", r->id );
     }
 
-  if( ( config->marketSize!=0 && config->orgCoolingPeriodDays==0 )
-      || ( config->marketSize==0 && config->orgCoolingPeriodDays!=0 ) )
-    Error( "If either MARKET_SIZE or ORG_COOLING_PERIOD_DAYS is specified, the other must also be set." );
-
-  if( config->marketSize > 0 )
-    {
-    config->orgs = (_ORG*)SafeCalloc( config->marketSize, sizeof(_ORG), "orgs - to track cooling period" );
-    _ORG* o = config->orgs;
-    for( int i=0; i<config->marketSize; ++i )
-      {
-      o->number = i;
-      ++o;
-      }
-    config->nAvailableOrgs = config->marketSize;
-    }
   }
 

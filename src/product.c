@@ -34,6 +34,9 @@ void FreeProduct( _PRODUCT* p )
   FreeIfAllocated( &(p->name) );
   if( p->stageArray != NULL )
     free( p->stageArray );
+  if( p->orgs != NULL )
+    FREE( p->orgs );
+
   free( p );
   }
 
@@ -157,6 +160,22 @@ int ValidateSingleProduct( _PRODUCT* p )
     return -10;
     }
 
+  if( ( p->marketSize!=0 && p->orgCoolingPeriodDays==0 )
+      || ( p->marketSize==0 && p->orgCoolingPeriodDays!=0 ) )
+    Error( "If either MARKET_SIZE or ORG_COOLING_PERIOD_DAYS is specified (for %s), the other must also be set.", p->id );
+
+  if( p->marketSize > 0 )
+    {
+    p->orgs = (_ORG*)SafeCalloc( p->marketSize, sizeof(_ORG), "orgs - to track cooling period" );
+    _ORG* o = p->orgs;
+    for( int i=0; i<p->marketSize; ++i )
+      {
+      o->number = i;
+      ++o;
+      }
+    p->nAvailableOrgs = p->marketSize;
+    }
+
   return 0;
   }
 
@@ -188,6 +207,15 @@ void PrintProduct( FILE* f, _PRODUCT* p )
     fprintf( f, "PRODUCT_INITIAL_MONTHLY_REVENUE=%.1lf\n", p->initialMonthlyRevenue );
     fprintf( f, "PRODUCT_INITIAL_MONTHLY_CUSTOMERS=%d\n", p->initialMonthlyCustomers );
     }
+
+  if( p->marketSize > 0 || p->orgCoolingPeriodDays > 0 )
+    fprintf( f, "# Variables related to saturating the target market:\n" );
+
+  if( p->marketSize > 0 )
+    fprintf( f, "PRODUCT_MARKET_SIZE=%d\n", p->marketSize );
+
+  if( p->orgCoolingPeriodDays > 0 )
+    fprintf( f, "PRODUCT_ORG_COOLING_PERIOD_DAYS=%d\n", p->orgCoolingPeriodDays );
 
   if( p->priceByUnits )
     {

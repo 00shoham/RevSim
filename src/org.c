@@ -1,8 +1,11 @@
 #include "base.h"
 
-void SaleToOrg( _CONFIG* conf, _ORG* o, time_t saleDate )
+void SaleToOrg( _CONFIG* conf, _PRODUCT* p, _ORG* o, time_t saleDate )
   {
   if( conf==NULL )
+    return;
+
+  if( p==NULL )
     return;
 
   if( o==NULL )
@@ -15,10 +18,10 @@ void SaleToOrg( _CONFIG* conf, _ORG* o, time_t saleDate )
   o->saleDate = saleDate;
 
   // one less available to sell to
-  -- (conf->nAvailableOrgs);
+  -- (p->nAvailableOrgs);
   }
 
-void RejectedByOrg( _CONFIG* conf, _ORG* o, time_t callDate )
+void RejectedByOrg( _CONFIG* conf, _PRODUCT* p, _ORG* o, time_t callDate )
   {
   if( conf==NULL )
     return;
@@ -31,14 +34,17 @@ void RejectedByOrg( _CONFIG* conf, _ORG* o, time_t callDate )
 
   o->isCustomer = 0;
   o->saleDate = 0;
-  o->earliestLegalCall = callDate + conf->orgCoolingPeriodDays * DAY_IN_SECONDS;
+  o->earliestLegalCall = callDate + p->orgCoolingPeriodDays * DAY_IN_SECONDS;
 
   // number of available orgs unchanged, but available date pushed out
   }
 
-void OrgAttrition( _CONFIG* conf, _ORG* o, time_t callDate )
+void OrgAttrition( _CONFIG* conf, _PRODUCT* p, _ORG* o, time_t callDate )
   {
   if( conf==NULL )
+    return;
+
+  if( p==NULL )
     return;
 
   if( callDate==0 )
@@ -49,25 +55,28 @@ void OrgAttrition( _CONFIG* conf, _ORG* o, time_t callDate )
 
   o->isCustomer = 0;
   o->saleDate = 0;
-  o->earliestLegalCall = callDate + conf->orgCoolingPeriodDays * DAY_IN_SECONDS;
+  o->earliestLegalCall = callDate + p->orgCoolingPeriodDays * DAY_IN_SECONDS;
 
   // number of available orgs incremented, but available date pushed out
-  ++ (conf->nAvailableOrgs);
+  ++ (p->nAvailableOrgs);
   }
 
-_ORG* FindAvailableTargetOrg( _CONFIG* conf, time_t callTime )
+_ORG* FindAvailableTargetOrg( _CONFIG* conf, _PRODUCT* p, time_t callTime )
   {
   if( conf==NULL )
     return NULL;
 
-  if( conf->nAvailableOrgs<=0 )
+  if( p==NULL )
     return NULL;
 
-  if( conf->orgs==NULL || conf->marketSize==0 )
+  if( p->nAvailableOrgs<=0 )
     return NULL;
 
-  _ORG* o = conf->orgs;
-  for( int i=0; i<conf->marketSize; ++i )
+  if( p->orgs==NULL || p->marketSize==0 )
+    return NULL;
+
+  _ORG* o = p->orgs;
+  for( int i=0; i<p->marketSize; ++i )
     {
     if( o->isCustomer==0
         && callTime >= o->earliestLegalCall )
@@ -79,20 +88,23 @@ _ORG* FindAvailableTargetOrg( _CONFIG* conf, time_t callTime )
   return NULL;
   }
 
-int CountAvailableOrgs( _CONFIG* conf, time_t callTime )
+int CountAvailableOrgs( _CONFIG* conf, _PRODUCT* p, time_t callTime )
   {
   if( conf==NULL )
     return -1;
 
-  if( conf->nAvailableOrgs<=0 )
-    return 0;
-
-  if( conf->orgs==NULL || conf->marketSize==0 )
+  if( p==NULL )
     return -2;
 
+  if( p->nAvailableOrgs<=0 )
+    return 0;
+
+  if( p->orgs==NULL || p->marketSize==0 )
+    return -3;
+
   int n = 0;
-  _ORG* o = conf->orgs;
-  for( int i=0; i<conf->marketSize; ++i )
+  _ORG* o = p->orgs;
+  for( int i=0; i<p->marketSize; ++i )
     {
     if( o->isCustomer==0 && callTime >= o->earliestLegalCall )
       ++n;

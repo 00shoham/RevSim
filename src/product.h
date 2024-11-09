@@ -32,6 +32,13 @@ typedef struct _product
 
   int nSalesStages;
   _SALES_STAGE** stageArray;
+
+  /* if the market size is fixed/limited, use this stuff */
+  int marketSize;
+  int orgCoolingPeriodDays;
+  int nAvailableOrgs;
+  _ORG* orgs;
+
   struct _product* next;
   } _PRODUCT;
 

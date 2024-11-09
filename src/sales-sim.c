@@ -246,7 +246,7 @@ void CloseSingleSale( _CONFIG* conf,
         }
 
       if( targetOrg != NULL )
-        OrgAttrition( conf, targetOrg, thisDay->t );
+        OrgAttrition( conf, product, targetOrg, thisDay->t );
 
       break; /* lost the customer */
       }
@@ -436,17 +436,18 @@ int SimulateInitialCall( _CONFIG* conf,
          thisDay->date.year, thisDay->date.month, thisDay->date.day,
          product->id );
 
-  if( conf->marketSize>0 /* unlimited */
-      && conf->nAvailableOrgs<=0 )
+  if( product->marketSize>0 /* unlimited */
+      && product->nAvailableOrgs<=0 )
     {
-    Event( "Tried to make a sales call but already sold to everyone (market=%d, left=%d)", conf->marketSize, conf->nAvailableOrgs );
+    Event( "Tried to make a sales call for %s but already sold to everyone (market=%d, left=%d)",
+            product->id, product->marketSize, product->nAvailableOrgs );
     return -1;
     }
 
   _ORG *targetOrg = NULL;
-  if( conf->marketSize>0 )
+  if( product->marketSize>0 )
     {
-    targetOrg = FindAvailableTargetOrg( conf, thisDay->t );
+    targetOrg = FindAvailableTargetOrg( conf, product, thisDay->t );
     if( targetOrg==NULL )
       {
       Event( "Rep %s tried to make a sales call on %04d-%02d-%02d but there is nobody left to call",
@@ -611,7 +612,7 @@ int SimulateInitialCall( _CONFIG* conf,
         ++ (thisDay->month->nRejections);
 
       if( targetOrg!=NULL ) /* org won't be called for a cooling period */
-        RejectedByOrg( conf, targetOrg, thisDay->t );
+        RejectedByOrg( conf, product, targetOrg, thisDay->t );
 
       return 0; /* failed - attrition at this stage of the sales process*/
       }
@@ -624,7 +625,7 @@ int SimulateInitialCall( _CONFIG* conf,
       Event( "Customer %s win at stage %s (%d) by %s.", customerID, stage->id, stageNo, salesRep->id );
 
       if( targetOrg!=NULL )
-        SaleToOrg( conf, targetOrg, thisDay->t );
+        SaleToOrg( conf, product, targetOrg, thisDay->t );
 
       CloseSingleSale( conf,
                        salesRep,

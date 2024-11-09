@@ -42,6 +42,16 @@ The following processes can be modeled:
   PRODUCT
   PRODUCT_NAME
 
+* In B2B businesses in particular, there may be a finite set of prospective
+  customers.  Once we've called a customer and pitched to them, they may
+  indicate non-interest and ask not to be called again.  After a while,
+  we will have called every prospective customer, and either sold to them
+  or been told to back off.  This is a process of market saturation and
+  must be incorporated in the model:
+
+  PRODUCT_MARKET_SIZE
+  PRODUCT_ORG_COOLING_PERIOD_DAYS
+
 * By default, a product is a monolithic thing with a price that falls on a
   bell curve.  You specify the bell curve with these variables:
 
@@ -204,16 +214,6 @@ The following processes can be modeled:
   PAYMENT_PROCESSING_PERCENT
   COLLECTIONS_DELAY_CALENDAR_DAYS_AVG
   COLLECTIONS_DELAY_CALENDAR_DAYS_SDEV
-
-* In B2B businesses in particular, there may be a finite set of prospective
-  customers.  Once we've called a customer and pitched to them, they may
-  indicate non-interest and ask not to be called again.  After a while,
-  we will have called every prospective customer, and either sold to them
-  or been told to back off.  This is a process of market saturation and
-  must be incorporated in the model:
-
-  MARKET_SIZE
-  ORG_COOLING_PERIOD_DAYS
 
 * Organizations have other staff and overhead costs, not just sales
   people.  We can leverage the sales rep model to represent people who
