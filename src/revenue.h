@@ -34,6 +34,8 @@ typedef struct _singleDay
   time_t t;
   int working;
   int nCalls;
+  int nFreshCalls;
+  int nFollowUpCalls;
   int maxCalls;
   _REVENUE_EVENT* dailySales;
   _PAY_EVENT* fees;

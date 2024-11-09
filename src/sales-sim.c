@@ -471,8 +471,12 @@ int SimulateInitialCall( _CONFIG* conf,
       Event( "Incrementing calls by %s on %04d-%02d-%02d to %d",
              salesRep->id, thisDay->date.year, thisDay->date.month, thisDay->date.day, thisDay->nCalls );
       ++ (thisDay->nCalls);
+      ++ (thisDay->nFollowUpCalls);
       if( thisDay->month )
+        {
         ++ (thisDay->month->nCalls);
+        ++ (thisDay->month->nFollowUpCalls);
+        }
       }
 
     _SALES_STAGE* stage = product->stageArray[ stageNo ];
@@ -565,8 +569,12 @@ int SimulateInitialCall( _CONFIG* conf,
           Event( "Incrementing calls by %s on %04d-%02d-%02d to %d",
                  salesRep->id, thisDay->date.year, thisDay->date.month, thisDay->date.day, thisDay->nCalls );
           ++ (thisDay->nCalls); /* make a call */
+          ++ (thisDay->nFollowUpCalls);
           if( thisDay->month )
+            {
             ++ (thisDay->month->nCalls); /* update the monthly summary data */
+            ++ (thisDay->month->nFollowUpCalls);
+            }
           }
         int nDaysToNextCall = (int)(RandN2( stage->connectRetryDaysAverage, stage->sdevConnectRetryDays ) + 0.5);
         if( thisDay==NULL )
@@ -893,12 +901,15 @@ void SimulateCalls( _CONFIG* conf, int dayNo, time_t tSim )
            s->id, repDay->maxCalls - repDay->nCalls, repDay->nCalls, repDay->date.year, repDay->date.month, repDay->date.day );
 
     /* repDay->nCalls starts >0 due to follow up from previous events */
-    for( ; repDay->nCalls < repDay->maxCalls; ++ (repDay->nCalls) )
+    for( ; repDay->nCalls < repDay->maxCalls; ++ (repDay->nCalls), ++ (repDay->nFreshCalls ) )
       { /* if selling multiple products, cycle through them */
       Event( "Incrementing calls by %s on %04d-%02d-%02d to %d",
              s->id, repDay->date.year, repDay->date.month, repDay->date.day, repDay->nCalls );
       if( repDay->month )
+        {
         ++ (repDay->month->nCalls);
+        ++ (repDay->month->nFreshCalls);
+        }
       _PRODUCT* product = s->class->products[s->productNum];
       if( s->endOfWorkDays==NULL )
         Event( "Rep %s has NULL end of work days", s->id );

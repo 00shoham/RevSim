@@ -485,7 +485,8 @@ void CallsReport( FILE* f, _CONFIG* conf )
       if( d->working==0 )
         fprintf( f, "  not working\n" );
       else
-        fprintf( f, "  %d/%d calls\n", d->nCalls, d->maxCalls );
+        fprintf( f, "  %d/%d calls -- %d fresh, %d follow-up\n",
+                 d->nCalls, d->maxCalls, d->nFreshCalls, d->nFollowUpCalls );
       }
     fprintf( f, "\n\n\n" );
     }

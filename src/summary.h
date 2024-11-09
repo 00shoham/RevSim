@@ -20,6 +20,8 @@ typedef struct _monthlySummary
   double salary;
   double expense;
   int nCalls;         /* e.g., made by a rep */
+  int nFreshCalls;
+  int nFollowUpCalls;
   int nAvailableOrgs; /* e.g., who it is legal to call */
   int nCustomers;     /* e.g., who already signed, hasn't quit yet */
   int nWins;          /* e.g., new deals */
