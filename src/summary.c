@@ -464,3 +464,30 @@ void UnitsReport( FILE* f, _CONFIG* conf )
     }
   }
 
+void CallsReport( FILE* f, _CONFIG* conf )
+  {
+  if( f==NULL )
+    Error( "CallsReport() - No output specified" );
+  if( conf==NULL )
+    Error( "CallsReport() - No configuration object" );
+  if( conf->salesReps==NULL || conf->nSalesReps<=0 )
+    Error( "CallsReport() - No sales reps defined" );
+
+  for( _SALES_REP* s = conf->salesReps; s!=NULL; s=s->next )
+    {
+    fprintf( f, "Sales rep: %s // %s\n", NULLPROTECT( s->id ), NULLPROTECT( s->name ) );
+    for( _SINGLE_DAY* d = s->workDays; d<=s->endOfWorkDays; ++d )
+      {
+      if( s->dailyCalls==0 )
+        continue; /* not a real rep */
+
+      fprintf( f, "  %04d-%02d-%02d", d->date.year, d->date.month, d->date.day );
+      if( d->working==0 )
+        fprintf( f, "  not working\n" );
+      else
+        fprintf( f, "  %d/%d calls\n", d->nCalls, d->maxCalls );
+      }
+    fprintf( f, "\n\n\n" );
+    }
+  }
+

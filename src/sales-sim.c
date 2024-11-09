@@ -468,6 +468,8 @@ int SimulateInitialCall( _CONFIG* conf,
     {
     if( stageNo>0 && thisDay<repLastDay ) /* if stageNo==0, caller to this function did that already */
       {
+      Event( "Incrementing calls by %s on %04d-%02d-%02d to %d",
+             salesRep->id, thisDay->date.year, thisDay->date.month, thisDay->date.day, thisDay->nCalls );
       ++ (thisDay->nCalls);
       if( thisDay->month )
         ++ (thisDay->month->nCalls);
@@ -559,6 +561,9 @@ int SimulateInitialCall( _CONFIG* conf,
         {
         if( callNum>0 && thisDay<repLastDay ) /* handled above if it's zero */
           {
+          Event( "rep %s making rebooking call attempt to org %s on %04d-%02d-%02d", salesRep->id, customerID, thisDay->date.year, thisDay->date.month, thisDay->date.day );
+          Event( "Incrementing calls by %s on %04d-%02d-%02d to %d",
+                 salesRep->id, thisDay->date.year, thisDay->date.month, thisDay->date.day, thisDay->nCalls );
           ++ (thisDay->nCalls); /* make a call */
           if( thisDay->month )
             ++ (thisDay->month->nCalls); /* update the monthly summary data */
@@ -631,8 +636,8 @@ int SimulateInitialCall( _CONFIG* conf,
 
     /* didn't win, didn't lose - move on to next stage then */
     nDaysToNextStage = (int)RandN2( stage->daysDelayAverage, stage->sdevDaysDelay );
-    Event( "Sales stage %s complete on %04d-%02d-%02d.  Next stage in %d+ days",
-           stage->id,
+    Event( "Sales stage %s complete by %s on %04d-%02d-%02d.  Next stage in %d+ days",
+           stage->id, salesRep->id,
            thisDay->date.year, thisDay->date.month, thisDay->date.day,
            nDaysToNextStage );
 
@@ -662,7 +667,7 @@ int SimulateInitialCall( _CONFIG* conf,
 
     /* thisDay now points to the date when the next sales stage
        happens */
-    Event( "Next sales stage will start on %04d-%02d-%02d", thisDay->date.year, thisDay->date.month, thisDay->date.day );
+    Event( "Next sales stage by %s will start on %04d-%02d-%02d", salesRep->id, thisDay->date.year, thisDay->date.month, thisDay->date.day );
     }
 
   return 0;
@@ -791,12 +796,16 @@ _SINGLE_DAY* FindRepDay( _SALES_REP* s, time_t theTime, _MMDD* theDay,
     return NULL;
     }
 
-  _SINGLE_DAY* dPtr = s->workDays + dayNo;
-  if( dPtr->date.year==theDay->year
-      && dPtr->date.month==theDay->month
-      && dPtr->date.day==theDay->day )
-    return dPtr;
+  for( int n = dayNo>1 ? dayNo-1 : dayNo; n < dayNo+2 && n < s->nWorkDays; ++n )
+    {
+    _SINGLE_DAY* dPtr = s->workDays + n;
+    if( dPtr->date.year==theDay->year
+        && dPtr->date.month==theDay->month
+        && dPtr->date.day==theDay->day )
+      return dPtr;
+    }
 
+  _SINGLE_DAY* dPtr = s->workDays + dayNo;
   Event( "Calculated dayNo %d (%04d-%02d-%02d) but wanted %04d-%02d-%02d for %s",
          dayNo,
          dPtr->date.year,
@@ -847,6 +856,15 @@ void SimulateCalls( _CONFIG* conf, int dayNo, time_t tSim )
     if( ! s->class->initiateCalls )
       { Event( "Rep %s in class %s does not initiate calls - skipping", NULLPROTECT( s->id ), NULLPROTECT( s->class->id ) ); continue; }
 
+    /* has this rep started and not yet left the org on this day? */
+    time_t tThis = MMDDToTime( &theDay );
+    time_t tFirst = MMDDToTime( &(s->firstDay) );
+    time_t tLast = MMDDToTime( &(s->lastDay) );
+    if( tThis < tFirst )
+      continue;
+    if( tThis > tLast )
+      continue;
+
     Event( "Call sequences starting %04d-%02d-%02d by %s",
            theDay.year, theDay.month, theDay.day, s->id );
 
@@ -877,13 +895,13 @@ void SimulateCalls( _CONFIG* conf, int dayNo, time_t tSim )
     /* repDay->nCalls starts >0 due to follow up from previous events */
     for( ; repDay->nCalls < repDay->maxCalls; ++ (repDay->nCalls) )
       { /* if selling multiple products, cycle through them */
+      Event( "Incrementing calls by %s on %04d-%02d-%02d to %d",
+             s->id, repDay->date.year, repDay->date.month, repDay->date.day, repDay->nCalls );
       if( repDay->month )
         ++ (repDay->month->nCalls);
       _PRODUCT* product = s->class->products[s->productNum];
       if( s->endOfWorkDays==NULL )
         Event( "Rep %s has NULL end of work days", s->id );
-      else
-        Event( "Rep %s has %d work days", s->id, s->endOfWorkDays - s->workDays );
       int err = SimulateInitialCall( conf, s, repDay, s->endOfWorkDays, product );
       if( err ) /* above function returns non-zero if it couldn't find a free org to call into */
         break; /* nobody left to call today */

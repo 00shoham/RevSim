@@ -12,6 +12,7 @@ int main( int argc, char** argv )
   char* counterFile = NULL;
   char* unitsFile = NULL;
   char* cashFile = NULL;
+  char* callsFile = NULL;
   int confTest = 0;
 
   RandomSeed();
@@ -28,6 +29,8 @@ int main( int argc, char** argv )
       eventsFile = argv[++i];
     else if( strcmp( argv[i], "-u" )==0 && i+1<argc )
       unitsFile = argv[++i];
+    else if( strcmp( argv[i], "-a" )==0 && i+1<argc )
+      callsFile = argv[++i];
     else if( strcmp( argv[i], "-k" )==0 && i+1<argc )
       counterFile = argv[++i];
     else if( strcmp( argv[i], "-s" )==0 && i+1<argc )
@@ -36,7 +39,7 @@ int main( int argc, char** argv )
       confTest = 1;
     else if( strcmp( argv[i], "-h" )==0 )
       {
-      printf("USAGE: %s [-c configFile] [-d configDir] [-o outFile] [-e eventsFile] [-u unitsFile] [-s cashFile] [-conftest]\n", argv[0] );
+      printf("USAGE: %s [-c configFile] [-d configDir] [-o outFile] [-e eventsFile] [-u unitsFile] [-a callsFile] [-s cashFile] [-conftest]\n", argv[0] );
       exit(0);
       }
     else
@@ -280,6 +283,18 @@ int main( int argc, char** argv )
       }
     else
       Warning( "Failed to open %s for writing", unitsFile );
+    }
+
+  if( NOTEMPTY( callsFile ) )
+    {
+    FILE* f = fopen( callsFile, "w" );
+    if( f!=NULL )
+      {
+      CallsReport( f, conf );
+      fclose( f );
+      }
+    else
+      Warning( "Failed to open %s for writing", callsFile );
     }
 
   if( NOTEMPTY( counterFile ) )

@@ -48,5 +48,6 @@ void SetTaxLossCarryForward( _CONFIG* conf, int Y, double amount );
 void SetMonthlyUnits( _CONFIG* conf, _MONTHLY_SUMMARY* month, _PRODUCT* p, _ORG* o, int n );
 void FreeMonthlyUnitsList( _MONTHLY_UNITS* list );
 void UnitsReport( FILE* f, _CONFIG* conf );
+void CallsReport( FILE* f, _CONFIG* conf );
 
 #endif
