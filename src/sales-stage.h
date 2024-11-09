@@ -12,6 +12,7 @@ typedef struct _salesStage
   int isTerminal;
 
   struct _salesStage* predecessor;
+  struct _salesStage* successor;
   double daysDelayAverage;
   double sdevDaysDelay;
 
@@ -32,6 +33,6 @@ _SALES_STAGE* FindSalesStage( _SALES_STAGE* list, char* id );
 void FreeSalesStage( _SALES_STAGE* list );
 int ValidateSingleStage( _SALES_STAGE* s );
 void PrintSalesStage( FILE* f, _SALES_STAGE* s );
-int SalesStagesArray( _SALES_STAGE* list, _SALES_STAGE*** arrayPtr );
+int SalesStagesArray( _SALES_STAGE* firstStage, _SALES_STAGE*** arrayPtr );
 
 #endif

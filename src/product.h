@@ -30,6 +30,9 @@ typedef struct _product
   int initialMonthlyCustomers;
   int initialMonthlyUnits;
 
+  int nCustomerWins;
+  int nCustomerMonths;
+
   int nSalesStages;
   _SALES_STAGE** stageArray;
 

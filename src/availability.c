@@ -358,7 +358,7 @@ int EstablishWorkDays( _SALES_REP* s, _CONFIG* config )
     Error( "Rep %s starts work before the simulation?", s->id );
 
   Notice( "%s has %d workdays", s->id, s->nWorkDays );
-  Notice( "Copying that from baseline + %d days delay", daysDelay );
+  /* Notice( "Copying that from baseline + %d days delay", daysDelay ); */
   memcpy( s->workDays,
           config->baselineWorkDays + daysDelay,
           s->nWorkDays * sizeof( _SINGLE_DAY ) );

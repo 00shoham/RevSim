@@ -264,10 +264,20 @@ int main( int argc, char** argv )
     }
 
   printf( "Simulated %d days\n", dayNo );
+
   printf( "Total customer wins: %d\n", conf->nCustomerWins );
   double duration = conf->nCustomerMonths;
   duration /= (double)conf->nCustomerWins;
   printf( "Average of %.1lf months before each customer is lost or the simulation ends\n", duration );
+
+  printf( "Per-product breakdown\n" );
+  for( _PRODUCT* p=conf->products; p!=NULL; p=p->next )
+    {
+    double pDuration = p->nCustomerMonths;
+    pDuration /= (double)p->nCustomerWins;
+    printf( "  %s: %d wins; %d product-months; %.1lf months average customer life\n",
+            p->id, p->nCustomerWins, p->nCustomerMonths, pDuration );
+    }
 
   _SALES_REP** reps = SalesRepArray( conf->salesReps );
   for( int i=0; i<conf->nSalesReps; ++i )

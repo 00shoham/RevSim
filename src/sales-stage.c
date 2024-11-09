@@ -132,10 +132,11 @@ int SSCompareFunc( const void* a, const void* b )
     return -1;
   }
 
-int SalesStagesArray( _SALES_STAGE* list, _SALES_STAGE*** arrayPtr )
+/* QQQ this disregards 'follows'  - fix! */
+int SalesStagesArray( _SALES_STAGE* firstStage, _SALES_STAGE*** arrayPtr )
   {
   int nItems = 0;
-  for( _SALES_STAGE* s = list; s!=NULL; s=s->next )
+  for( _SALES_STAGE* s = firstStage; s!=NULL; s=s->successor )
     ++nItems;
 
   _SALES_STAGE** array = NULL;
@@ -143,13 +144,11 @@ int SalesStagesArray( _SALES_STAGE* list, _SALES_STAGE*** arrayPtr )
     = (_SALES_STAGE**)SafeCalloc( nItems, sizeof(_SALES_STAGE*), "SALES_STAGE array" );
 
   int i = 0;
-  for( _SALES_STAGE* s = list; s!=NULL; s=s->next )
+  for( _SALES_STAGE* s = firstStage; s!=NULL; s=s->successor )
     {
     array[i] = s;
     ++i;
     }
-
-  qsort( array, nItems, sizeof(_SALES_STAGE*), SSCompareFunc );
 
   return nItems;
   }

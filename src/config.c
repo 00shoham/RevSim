@@ -292,6 +292,7 @@ int ProcessKeywordPair( _CONFIG* config, char* variable, char* value )
     if( predecessor==NULL )
       Error( "Cannot find earlier sales stage %s", value );
     config->stages->predecessor = predecessor;
+    predecessor->successor = config->stages;
     config->stages->isInitial = 0;
     config->stages->predecessor->isTerminal = 0;
     return 0;
@@ -577,7 +578,7 @@ int ProcessKeywordPair( _CONFIG* config, char* variable, char* value )
     if( s==NULL )
       Error( "Cannot find sales stage [%s]", value );
     _SALES_STAGE** stageArray = NULL;
-    int nStages = SalesStagesArray( config->stages, &(stageArray) );
+    int nStages = SalesStagesArray( s, &(stageArray) );
     if( nStages<1 )
       Error( "Empty sales stage array?? [%s]", value );
     config->products->nSalesStages = nStages;
