@@ -314,7 +314,7 @@ int ProcessKeywordPair( _CONFIG* config, char* variable, char* value )
     if( config->stages==NULL )
       Error( "CONFIG: %s must follow STAGE", variable );
     double d = atof( value );
-    if( d<1 || d>100 )
+    if( d<0 || d>100 )
       Error( "CONFIG: %s must be from 1 to 100", variable );
     config->stages->sdevDaysDelay = d;
     return 0;
@@ -325,7 +325,7 @@ int ProcessKeywordPair( _CONFIG* config, char* variable, char* value )
     if( config->stages==NULL )
       Error( "CONFIG: %s must follow STAGE", variable );
     double d = atof( value );
-    if( d<1 || d>100 )
+    if( d<0 || d>100 )
       Error( "CONFIG: %s must be from 1 to 100", variable );
     config->stages->percentAttrition = d;
     return 0;
@@ -710,7 +710,7 @@ int ProcessKeywordPair( _CONFIG* config, char* variable, char* value )
     if( config->salesRepClasses==NULL )
       Error( "CONFIG: %s must follow REP_CLASS", variable );
     double d = atof( value );
-    if( d<1 || d>config->salesRepClasses->averageEmploymentMonths )
+    if( d<0 || d>config->salesRepClasses->averageEmploymentMonths )
       Error( "CONFIG: %s must be from 1 to %.1lf", config->salesRepClasses->averageEmploymentMonths );
     config->salesRepClasses->sdevEmploymentMonths = d;
     return 0;
@@ -889,7 +889,7 @@ int ProcessKeywordPair( _CONFIG* config, char* variable, char* value )
     double d = atof( value );
     if( d>100000000 )
       Error( "CONFIG: %s cannot exceed 100000000", variable );
-    if( d<1 )
+    if( d<0 )
       Warning( "CONFIG: %s == %s --- unpaid worker?", variable, value );
     config->salesReps->annualPay = d;
     config->salesReps->monthlyPay = d / 12.0;
