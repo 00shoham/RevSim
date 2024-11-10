@@ -40,6 +40,7 @@ typedef struct _product
   int marketSize;
   int orgCoolingPeriodDays;
   int nAvailableOrgs;
+  int maxOrgNum;
   _ORG* orgs;
 
   struct _product* next;

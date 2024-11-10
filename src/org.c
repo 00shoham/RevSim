@@ -79,6 +79,7 @@ _ORG* FindAvailableTargetOrg( _CONFIG* conf, _PRODUCT* p, time_t callTime )
   for( int i=0; i<p->marketSize; ++i )
     {
     if( o->isCustomer==0
+        && o->lostForever==0
         && callTime >= o->earliestLegalCall )
       return o;
 
@@ -88,7 +89,7 @@ _ORG* FindAvailableTargetOrg( _CONFIG* conf, _PRODUCT* p, time_t callTime )
   return NULL;
   }
 
-int CountAvailableOrgs( _CONFIG* conf, _PRODUCT* p, time_t callTime )
+int CountAvailableOrgs( _CONFIG* conf, _PRODUCT* p, time_t callTime, int maxOrgNum )
   {
   if( conf==NULL )
     return -1;
@@ -96,20 +97,21 @@ int CountAvailableOrgs( _CONFIG* conf, _PRODUCT* p, time_t callTime )
   if( p==NULL )
     return -2;
 
-  if( p->nAvailableOrgs<=0 )
-    return 0;
-
   if( p->orgs==NULL || p->marketSize==0 )
     return -3;
 
   int n = 0;
   _ORG* o = p->orgs;
-  for( int i=0; i<p->marketSize; ++i )
+
+  int max = p->marketSize;
+  if( maxOrgNum )
+    max = maxOrgNum;
+  for( int i=0; i<max; ++i )
     {
-    if( o->isCustomer==0 && callTime >= o->earliestLegalCall )
+    if( o->isCustomer==0 && o->lostForever==0 && callTime >= o->earliestLegalCall )
       ++n;
     ++o;
     }
 
-  return n;
+  return p->marketSize - maxOrgNum + n;
   }

@@ -106,6 +106,11 @@ void CloseSingleSale( _CONFIG* conf,
     return;
   if( product==NULL )
     return;
+  if( EMPTY( product->id ) )
+    return;
+  if( (product->marketSize>0) && (targetOrg==NULL) )
+    Error( "CloseSingleSale() for product %s with market size %d but no target org",
+           product->id, product->marketSize );
 
   if( repFirstDay >= salesRep->workDays
       && repFirstDay <= salesRep->endOfWorkDays )
@@ -121,11 +126,11 @@ void CloseSingleSale( _CONFIG* conf,
 
   /* note that targetOrg is permitted to be NULL */
 
-  Event( "CloseSingleSale( rep=%s, firstDay=%04d-%02d-%02d, lastDay(-1)=%04d-%02d-%02d, product=%s",
+  Event( "CloseSingleSale( rep=%s, firstDay=%04d-%02d-%02d, lastDay(-1)=%04d-%02d-%02d, product=%s, overrideUnits=%d",
           salesRep->id,
           repFirstDay->date.year, repFirstDay->date.month, repFirstDay->date.day,
           (repLastDay-1)->date.year, (repLastDay-1)->date.month, (repLastDay-1)->date.day,
-          product->id );
+          product->id, overrideUnits );
 
   _SINGLE_DAY* thisDay = repFirstDay;
 
@@ -174,7 +179,12 @@ void CloseSingleSale( _CONFIG* conf,
     if( product->priceByUnits )
       {
       finalUnits = (int)(round( RandN2( product->averageCustomerSizeUnits, product->sdevCustomerSizeUnits ) ));
-      initialUnits = (int)(round( finalUnits / pow( monthlyGrowthRate, (double)monthsToSteadyState ) ));
+      if( product->averageMonthlyGrowthRateUnits ) /* add this many monthly */
+        initialUnits = 0;
+      else if( monthlyGrowthRate > 1.0 )
+        initialUnits = (int)(round( finalUnits / pow( monthlyGrowthRate, (double)monthsToSteadyState ) ));
+      else
+        initialUnits = finalUnits;
       unitOnboardingFee = RandN2( product->averageUnitOnboardingFee, product->sdevUnitOnboardingFee );
       unitMonthlyFee = RandN2( product->averageUnitMonthlyRecurringFee, product->sdevUnitMonthlyRecurringFee );
       }
@@ -207,10 +217,8 @@ void CloseSingleSale( _CONFIG* conf,
     {
     Event( ".. unitOnboardingFee = %.1lf", unitOnboardingFee );
     Event( ".. unitMonthlyFee = %.1lf", unitMonthlyFee );
-    if( initialUnits>0 )
-      Event( ".. initialUnits = %d", initialUnits );
-    if( finalUnits>0 )
-      Event( ".. finalUnits = %d", finalUnits );
+    Event( ".. initialUnits = %d", initialUnits );
+    Event( ".. finalUnits = %d", finalUnits );
     }
   else
     {
@@ -243,11 +251,18 @@ void CloseSingleSale( _CONFIG* conf,
 
     if( PercentProbabilityEvent( product->probabilityOfCustomerAttritionPerMonth ) )
       {
-      Event( "Customer %d lost at month %04d-%02d (%d)", customer, thisDay->date.year, thisDay->date.month, monthNo );
+      if( targetOrg!=NULL )
+        targetOrg->lostForever = 1;
+
+      Event( "Lost customer %d on %04d-%02d-%02d (month %d)",
+        customer,
+        thisDay->date.year, thisDay->date.month, thisDay->date.day,
+        monthNo );
 
       if( thisDay->month )
         {
         ++ (thisDay->month->nLosses );
+        -- (thisDay->month->nCustomers );
         }
 
       if( targetOrg != NULL )
@@ -282,9 +297,9 @@ void CloseSingleSale( _CONFIG* conf,
       if( unitsToAdd > 0 )
         {
         revenue += unitOnboardingFee * unitsToAdd;
-        Event( ".. %04d-%02d-%02d %s sold %d additional units at %.1lf onboarding fee to org %d",
+        Event( ".. %04d-%02d-%02d %s sold %d additional units (reaching %d) at %.1lf onboarding fee to org %d",
                thisDay->date.year, thisDay->date.month, thisDay->date.day,
-               repID, unitsToAdd, unitOnboardingFee, customer );
+               repID, unitsToAdd, units, unitOnboardingFee, customer );
         }
 
       if( units > 0 )
@@ -458,18 +473,20 @@ int SimulateInitialCall( _CONFIG* conf,
     targetOrg = FindAvailableTargetOrg( conf, product, thisDay->t );
     if( targetOrg==NULL )
       {
-      Event( "%04d-%02d-%02d: Rep %s tried to make a sales call for %s but there are no orgs left to call",
+      Event( "%04d-%02d-%02d: Rep %s tried to make a sales call for %s but there are no orgs left to call (market size==%d)",
              thisDay->date.year, thisDay->date.month, thisDay->date.day,
-             salesRep->id, product->id );
+             salesRep->id, product->id, product->marketSize );
       return -2;
       }
+    if( targetOrg->number > product->maxOrgNum )
+      product->maxOrgNum = targetOrg->number;
     }
 
   char customerID[100];
-  if( targetOrg==NULL )
-    strcpy( customerID, "anon" );
-  else
+  if( targetOrg!=NULL )
     snprintf( customerID, sizeof(customerID)-1, "<%d>", targetOrg->number );
+  else
+    strcpy( customerID, "<anon>" );
 
   Event( "%04d-%02d-%02d: simulate initial call for product %s by %s to %s",
          thisDay->date.year, thisDay->date.month, thisDay->date.day,
@@ -606,10 +623,8 @@ int SimulateInitialCall( _CONFIG* conf,
             break;
         }
 
-      /* QQQ why are we trying to do the first stage here? */
-      /* too late! */
       if( thisDay >= repLastDay )
-        {
+        { /* this should never happen.. */
         _SINGLE_DAY* repLastRealDay = repLastDay - 1;
         Event( "Rep %s is gone (on %04d-%02d-%02d) before sales stage %s - sales process terminated.",
                salesRep->id,
@@ -622,7 +637,9 @@ int SimulateInitialCall( _CONFIG* conf,
     /* possibly lose the customer at this stage */
     if( PercentProbabilityEvent( stage->percentAttrition ) )
       {
-      Event( "Lost prospect %s at stage %s (%d) by %s.", customerID, stage->id, stageNo, salesRep->id );
+      Event( "%04d-%02d-%02d: Lost prospect %s at stage %s (%d) by %s.",
+             thisDay->date.year, thisDay->date.month, thisDay->date.day,
+             customerID, stage->id, stageNo, salesRep->id );
 
       if( thisDay->month ) /* update monthly stats */
         ++ (thisDay->month->nRejections);
@@ -649,7 +666,7 @@ int SimulateInitialCall( _CONFIG* conf,
                        thisDay,
                        repLastDay,
                        product,
-                       0,
+                       0.0,
                        0 );
 
       return 0;
@@ -932,16 +949,11 @@ void SimulateCalls( _CONFIG* conf, int dayNo, time_t tSim )
       /* if selling multiple products, cycle through them */
       _PRODUCT* product = s->class->products[s->productNum];
 
-      int err = SimulateInitialCall( conf, s, repDay, s->endOfWorkDays, product );
-      if( err ) /* above function returns non-zero if it couldn't find a free org to call into */
-        {
-        Event( "%04d-%02d-%02d: %s initial call returned error %d - ending this day",
+      int couldFindOrgToCall = SimulateInitialCall( conf, s, repDay, s->endOfWorkDays, product );
+      if( couldFindOrgToCall ) /* above function returns non-zero if it couldn't find a free org to call into */
+        Event( "%04d-%02d-%02d: %s initial call returned error %d - try another product?",
                repDay->date.year, repDay->date.month, repDay->date.day,
-               s->id, err );
-        break; /* nobody left to call today */
-        }
-
-      s->productNum = (s->productNum+1) % s->class->nProducts;
+               s->id, couldFindOrgToCall );
 
       ++ (repDay->nCalls);
       ++ (repDay->nFreshCalls);
@@ -950,6 +962,14 @@ void SimulateCalls( _CONFIG* conf, int dayNo, time_t tSim )
         {
         ++ (repDay->month->nCalls);
         ++ (repDay->month->nFreshCalls);
+        }
+
+      int prevProductNumber = s->productNum;
+      s->productNum = (s->productNum+1) % s->class->nProducts;
+
+      if( couldFindOrgToCall && ( s->productNum == prevProductNumber ) )
+        { /* market saturated and no more products */
+        break;
         }
       }
     }

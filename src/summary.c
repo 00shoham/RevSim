@@ -436,10 +436,14 @@ void UnitsReport( FILE* f, _CONFIG* conf )
   _MONTHLY_SUMMARY* ms = conf->monthlySummary;
   for( int monthNo=0; monthNo<conf->nMonths; ++monthNo, ++ms )
     {
-    if( ms->units==NULL )
-      continue;
-
     fprintf( f, "Month %04d-%02d\n", ms->monthStart.year, ms->monthStart.month );
+
+    if( ms->units==NULL )
+      {
+      fprintf( f, "  no units\n" );
+      continue;
+      }
+
     for( _PRODUCT* p = conf->products; p!=NULL; p=p->next )
       {
       if( ! p->priceByUnits )

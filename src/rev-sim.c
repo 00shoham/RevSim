@@ -150,7 +150,17 @@ int main( int argc, char** argv )
               p->id, avgRevenuePerCustomer, p->initialMonthlyCustomers );
       for( int custNo = 0; custNo < p->initialMonthlyCustomers; ++custNo )
         {
-        CloseSingleSale( conf, conf->customerCare, NULL,
+        _ORG* targetOrg = NULL;
+        if( p->marketSize>0 )
+          {
+          targetOrg = FindAvailableTargetOrg( conf, p, conf->simulationStart );
+          if( targetOrg==NULL )
+            Error( "Cannot find available org for initial cohort for product %s", p->id );
+          if( targetOrg->number > p->maxOrgNum )
+            p->maxOrgNum = targetOrg->number;
+          }
+
+        CloseSingleSale( conf, conf->customerCare, targetOrg,
                          startDay, endDay,
                          p, avgRevenuePerCustomer, 0 );
         }
@@ -168,7 +178,16 @@ int main( int argc, char** argv )
         unitsPerCustomer = 1;
       for( int custNo = 0; custNo < p->initialMonthlyCustomers; ++custNo )
         {
-        CloseSingleSale( conf, conf->customerCare, NULL,
+        _ORG* targetOrg = NULL;
+        if( p->marketSize>0 )
+          {
+          targetOrg = FindAvailableTargetOrg( conf, p, conf->simulationStart );
+          if( targetOrg==NULL )
+            Error( "Cannot find available org for initial cohort for product %s", p->id );
+          if( targetOrg->number > p->maxOrgNum )
+            p->maxOrgNum = targetOrg->number;
+          }
+        CloseSingleSale( conf, conf->customerCare, targetOrg,
                          startDay, endDay,
                          p, avgRevenuePerCustomer, unitsPerCustomer );
         }
@@ -185,15 +204,22 @@ int main( int argc, char** argv )
     {
     day->cashOnHand += carryForwardCashBalance;
 
-    /* for reporting purposes, count how many orgs are left to call: */
-    if( dayNo < conf->simulationDurationDays
-        && day->date.day==1
-        && day->month!=NULL )
+    if( dayNo < conf->simulationDurationDays )
       {
-      int nOrgs = 0;
+      int nOrgsTotal = 0;
       for( _PRODUCT* p=conf->products; p!=NULL; p=p->next )
-        nOrgs += CountAvailableOrgs( conf, p, tSim );
-      day->month->nAvailableOrgs = nOrgs;
+        {
+        p->nAvailableOrgs = CountAvailableOrgs( conf, p, tSim, p->maxOrgNum );
+        Event( "%04d-%02d-%02d: orgs available for %s == %d",
+               day->date.year, day->date.month, day->date.day,
+               p->id, p->nAvailableOrgs );
+        nOrgsTotal += p->nAvailableOrgs;
+        }
+
+      if( day->date.day==1 && day->month!=NULL )
+        {
+        day->month->nAvailableOrgs = nOrgsTotal;
+        }
       }
 
     /* if we just started a month, then add up the summaries
