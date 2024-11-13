@@ -257,3 +257,17 @@ The following processes can be modeled:
   FIRST_DAY=2022-07-01
   DURATION=1095
 
+
+if( strcasecmp( variable, "INVESTMENT" )==0 )
+    eventType = et_investment;
+  else if( strcasecmp( variable, "GRANT" )==0 )
+    eventType = et_grant;
+  else if( strcasecmp( variable, "TAX_REFUND" )==0 )
+    eventType = et_tax_refund;
+  else if( strcasecmp( variable, "ONE_TIME_INCOME" )==0 )
+    eventType = et_one_time_income;
+  else if( strcasecmp( variable, "ONE_TIME_EXPENSE" )==0 )
+    eventType = et_one_time_expense;
+TAX_RATE_PERCENT
+INITIAL_CASH_BALANCE
+

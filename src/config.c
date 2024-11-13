@@ -905,8 +905,8 @@ int ProcessKeywordPair( _CONFIG* config, char* variable, char* value )
     if( config->salesReps==NULL )
       Error( "CONFIG: %s must follow SALES_REP", variable );
     int n = atoi( value );
-    if( n<1 || n>200 )
-      Error( "CONFIG: %s must be from 1 to 200", variable );
+    if( n<1 || n>200000 )
+      Error( "CONFIG: %s must be from 1 to 200000", variable );
     config->salesReps->dailyCalls = n;
     return 0;
     }
