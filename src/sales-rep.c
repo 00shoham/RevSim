@@ -137,7 +137,8 @@ void PrintSalesRepClass( FILE* f, _SALES_REP_CLASS* rt )
       fprintf( f, "REP_CLASS_PRODUCT=%s\n", rt->products[i]->id );
     }
 
-  fprintf( f, "REP_CLASS_VACATION=%s\n", rt->allowance->id );
+  if( rt->allowance != NULL )
+    fprintf( f, "REP_CLASS_VACATION=%s\n", rt->allowance->id );
 
   if( rt->annualPayIncreasePercent>0 )
     fprintf( f, "REP_CLASS_ANNUAL_INCREASE_PERCENT=%.1lf\n", rt->annualPayIncreasePercent );

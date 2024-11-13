@@ -21,11 +21,18 @@ inline double RandN()
 
 inline int PercentProbabilityEvent( double percent )
   {
+  int threshold = (int)(percent * 1000.0 + 0.5);
   int random = lrand48() % 100000;
-  if( random <= (int)(percent * 1000.0 + 0.5) )
+  if( random <= threshold )
+    {
+    /* Event( "PercentProbabilityEvent(%.1lf - %d - %d) ==> 1", percent, threshold, random ); */
     return 1;
+    }
   else
+    {
+    /* Event( "PercentProbabilityEvent(%.1lf - %d - %d) ==> 0", percent, threshold, random ); */
     return 0;
+    }
   }
 
 void RandomSeed()

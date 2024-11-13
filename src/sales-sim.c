@@ -490,10 +490,16 @@ int SimulateInitialCall( _CONFIG* conf,
 
   Event( "%04d-%02d-%02d: simulate initial call for product %s by %s to %s",
          thisDay->date.year, thisDay->date.month, thisDay->date.day,
-         product->id, salesRep->id, customerID);
+         product->id, salesRep->id, customerID );
 
   for( int stageNo = 0; stageNo < product->nSalesStages; ++stageNo )
     {
+    /*
+    Event( "%04d-%02d-%02d: call during stage %d for product %s by %s to %s",
+           thisDay->date.year, thisDay->date.month, thisDay->date.day,
+           stageNo, product->id, salesRep->id, customerID );
+    */
+
     if( stageNo>0 && thisDay<repLastDay ) /* if stageNo==0, caller to this function did that already */
       {
       ++ (thisDay->nCalls);
@@ -517,9 +523,11 @@ int SimulateInitialCall( _CONFIG* conf,
       _SALES_REP* newRep = RandomRepFromClassList( conf, stage->repClasses, thisDay->t );
       if( newRep!=NULL )
         {
-        Event( "%04d-%02d-%02d: moved to product %s stage %s, switched rep to %s",
+        Event( "%04d-%02d-%02d: moved %s to product %s stage %d:%s, switched rep from %s to %s",
                thisDay->date.year, thisDay->date.month, thisDay->date.day,
-               product->id, stage->id, newRep->id );
+               customerID, product->id, stageNo, stage->id, salesRep->id, newRep->id );
+
+        repLastDay = newRep->endOfWorkDays;
 
         if( thisDay->month )
           ++ (thisDay->month->nTransfers);
@@ -637,9 +645,9 @@ int SimulateInitialCall( _CONFIG* conf,
     /* possibly lose the customer at this stage */
     if( PercentProbabilityEvent( stage->percentAttrition ) )
       {
-      Event( "%04d-%02d-%02d: Lost prospect %s at stage %s (%d) by %s.",
+      Event( "%04d-%02d-%02d: Lost prospect %s at stage %s (%d) by %s (%.1lf attrition).",
              thisDay->date.year, thisDay->date.month, thisDay->date.day,
-             customerID, stage->id, stageNo, salesRep->id );
+             customerID, stage->id, stageNo, salesRep->id, stage->percentAttrition );
 
       if( thisDay->month ) /* update monthly stats */
         ++ (thisDay->month->nRejections);
@@ -671,9 +679,16 @@ int SimulateInitialCall( _CONFIG* conf,
 
       return 0;
       }
+    else
+      {
+      if( stageNo>0 )
+        {
+        Event( "Stage %d (%s) for product %s not terminal?", stageNo, stage->id, product->id );
+        }
+      }
   
     if( stageNo == product->nSalesStages-1 )
-      Warning( "Attempt to proceed to sales stage %d - for product %s but there is no such stage!",
+      Event( "Attempt to proceed to sales stage %d - for product %s but there is no such stage!",
                stageNo+1, product->id );
 
     /* didn't win, didn't lose - move on to next stage then */
@@ -903,9 +918,21 @@ void SimulateCalls( _CONFIG* conf, int dayNo, time_t tSim )
     time_t tFirst = MMDDToTime( &(s->firstDay) );
     time_t tLast = MMDDToTime( &(s->lastDay) );
     if( tThis < tFirst )
+      {
+      /*
+      Event( "Rep %s has not yet started as of %04d-%02d-%02d",
+             s->id, theDay.year, theDay.month, theDay.day );
+      */
       continue;
+      }
     if( tThis > tLast )
+      {
+      /*
+      Event( "Rep %s has already finished by %04d-%02d-%02d",
+             s->id, theDay.year, theDay.month, theDay.day );
+      */
       continue;
+      }
 
     Event( "Call sequences starting %04d-%02d-%02d by %s",
            theDay.year, theDay.month, theDay.day, s->id );
@@ -916,6 +943,8 @@ void SimulateCalls( _CONFIG* conf, int dayNo, time_t tSim )
       {
       if( notFoundReason == bdr_before_start || notFoundReason == bdr_after_end )
         { /* fine */
+        Event( "Rep %s not found for date 04d-%02d-%02d - reason %d",
+               s->id, theDay.year, theDay.month, theDay.day, (int)notFoundReason );
         }
       else
         {

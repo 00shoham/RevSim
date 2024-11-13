@@ -253,11 +253,13 @@ int ProcessKeywordPair( _CONFIG* config, char* variable, char* value )
 
   if( strcasecmp( variable, "VACATION_DAYS" )==0 )
     {
-    if( config->vacations==NULL )
+    if( config->vacations==NULL || EMPTY( config->vacations->id ) )
       Error( "CONFIG: %s must follow VACATION", variable );
     int n = atoi( value );
-    if( n<1 || n>100 )
+    if( n<0 || n>100 )
       Error( "CONFIG: %s has unreasonable value", variable );
+    if( n==0 )
+      Warning( "CONFIG: %s has no vacation days -- is it a bot?", config->vacations->id );
     config->vacations->daysPerYear = n;
     return 0;
     }
@@ -291,6 +293,8 @@ int ProcessKeywordPair( _CONFIG* config, char* variable, char* value )
     _SALES_STAGE* predecessor = FindSalesStage( config->stages, value );
     if( predecessor==NULL )
       Error( "Cannot find earlier sales stage %s", value );
+    if( predecessor==config->stages )
+      Error( "Stage %s cannot follow itself", value );
     config->stages->predecessor = predecessor;
     predecessor->successor = config->stages;
     config->stages->isInitial = 0;
@@ -1449,6 +1453,31 @@ void ReadConfig( _CONFIG* config, char* filePath )
 
 void ValidateConfig( _CONFIG* config )
   {
+#if 0
+  for( _SALES_STAGE* s = config->stages; s!=NULL; s=s->next )
+    {
+    if( EMPTY( s->id ) )
+      {
+      printf( "Stage with NULL ID" );
+      continue;
+      }
+    if( EMPTY( s->name ) )
+      {
+      printf( "Stage %s with NULL name", s->id );
+      continue;
+      }
+    printf( "Stage: %s (%s)\n", s->id, s->name );
+    if( s->isTerminal )
+      printf( " .. terminal\n" );
+    if( s->isInitial )
+      printf( " .. initial\n" );
+    if( s->predecessor != NULL )
+      printf( " .. follows %s\n", NULLPROTECT( s->predecessor->id ) );
+    if( s->successor != NULL )
+      printf( " .. followed by %s\n", NULLPROTECT( s->successor->id ) );
+    }
+#endif
+
   if( config==NULL )
     Error( "Cannot validate a NULL configuration" );
 

@@ -50,9 +50,9 @@ int ValidateSingleVacation( _VACATION* v )
     Warning( "Vacation %s has no name", v->id );
     return -3;
     }
-  if( v->daysPerYear<1 )
+  if( v->daysPerYear<0 )
     {
-    Warning( "Vacation %s has too few days", v->id );
+    Warning( "Vacation %s has a negative number of days", v->id );
     return -4;
     }
   if( v->daysPerYear>100 )
