@@ -4,6 +4,7 @@
   - high attrition rate / low engagement rate
   - start and end date for a campaign
   - escalate some non-customer, non-PFO customers into the sales pipeline
+  - no weekends, holidays.
 
 * Add support for launch date for products, so we can simulate future
   product launches (not at simulation start time/date).
