@@ -1,4 +1,9 @@
-* Simulate initial revenue per product.
+* Add advertising to the model.
+  - spend monthly and/or cost per impression
+  - make a number of impressions, randomly across customers, prospects
+  - high attrition rate / low engagement rate
+  - start and end date for a campaign
+  - escalate some non-customer, non-PFO customers into the sales pipeline
 
 * Add support for launch date for products, so we can simulate future
   product launches (not at simulation start time/date).
@@ -9,17 +14,6 @@
 * Add income tax expenses.  Probably just post-process the annual revenue
   and inject quarterly tax payments.  Need config to work out tax rates
   based on levels of revenue.
-
-* Add support for cashflow modeling:
-  - initial cash on hand
-  - investment events
-  - subsidy events
-  - tax instalment payments (as above)
-  - the rest is already modeled
-  - separate output file?
-
-* How do we model revenue that comes in via a marketing spend plus
-  self-service enrollment?  i.e., B2C business.
 
 * How do we model B2B2C business?  i.e., sign up partners, and they
   bring in end customers?
