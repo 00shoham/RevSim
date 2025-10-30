@@ -60,13 +60,13 @@ int ValidateSingleStage( _SALES_STAGE* s )
     return -3;
     }
 
-  if( s->daysDelayAverage<=0 || s->daysDelayAverage>365 )
+  if( s->daysDelayAverage<0 || s->daysDelayAverage>365 )
     {
     Warning( "Sales stage %s has no/invalid days delay average", s->id );
     return -5;
     }
 
-  if( s->sdevDaysDelay<=0 || s->sdevDaysDelay>100 )
+  if( s->sdevDaysDelay<0 || s->sdevDaysDelay>100 )
     {
     Warning( "Sales stage %s has no/invalid days delay s.deviation", s->id );
     return -6;

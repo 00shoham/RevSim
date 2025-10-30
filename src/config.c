@@ -1566,8 +1566,9 @@ void ValidateConfig( _CONFIG* config )
   for( int i=0; i<nStages; ++i )
     {
     _SALES_STAGE* s = stageArray[i];
-    if( ValidateSingleStage( s )!=0 )
-      Error( "Sales stage does not validate - %s", s->id );
+    int err = ValidateSingleStage( s );
+    if( err )
+      Error( "Sales stage does not validate - %s (%d)", s->id, err );
     if( s->predecessor==NULL )
       ++nStagesNoDeps;
     }
@@ -1580,20 +1581,23 @@ void ValidateConfig( _CONFIG* config )
 
   for( _PRODUCT* p = config->products; p!=NULL; p=p->next )
     {
-    if( ValidateSingleProduct( p )!=0 )
-      Error( "Product does not validate - %s", p->id );
+    int err = ValidateSingleProduct( p );
+    if( err )
+      Error( "Product does not validate - %s (%d)", p->id, err );
     }
 
   for( _SALES_REP_CLASS* rt = config->salesRepClasses; rt!=NULL; rt=rt->next )
     {
-    if( ValidateSingleSalesRepClass( rt )!=0 )
-      Error( "Sales rep class does not validate - %s", rt->id );
+    int err = ValidateSingleSalesRepClass( rt );
+    if( err )
+      Error( "Sales rep class does not validate - %s (%d)", rt->id, err );
     }
 
   for( _SALES_REP* r = config->salesReps; r!=NULL; r=r->next )
     {
-    if( ValidateSingleSalesRep( r, config )!=0 )
-      Error( "Sales rep does not validate - %s", r->id );
+    int err = ValidateSingleSalesRep( r, config );
+    if( err )
+      Error( "Sales rep does not validate - %s (%d)", r->id, err );
     }
 
   }

@@ -500,21 +500,6 @@ int SimulateInitialCall( _CONFIG* conf,
            stageNo, product->id, salesRep->id, customerID );
     */
 
-    if( stageNo>0 && thisDay<repLastDay ) /* if stageNo==0, caller to this function did that already */
-      {
-      ++ (thisDay->nCalls);
-      ++ (thisDay->nFollowUpCalls);
-      if( thisDay->month )
-        {
-        ++ (thisDay->month->nCalls);
-        ++ (thisDay->month->nFollowUpCalls);
-        }
-      Event( "%04d-%02d-%02d: incremented calls by %s for %s to %d",
-             thisDay->date.year, thisDay->date.month, thisDay->date.day,
-             salesRep->id, product->id, thisDay->nCalls
-             );
-      }
-
     _SALES_STAGE* stage = product->stageArray[ stageNo ];
 
     if( stage->repClasses!=NULL
@@ -526,8 +511,6 @@ int SimulateInitialCall( _CONFIG* conf,
         Event( "%04d-%02d-%02d: moved %s to product %s stage %d:%s, switched rep from %s to %s",
                thisDay->date.year, thisDay->date.month, thisDay->date.day,
                customerID, product->id, stageNo, stage->id, salesRep->id, newRep->id );
-
-        repLastDay = newRep->endOfWorkDays;
 
         if( thisDay->month )
           ++ (thisDay->month->nTransfers);
@@ -549,6 +532,8 @@ int SimulateInitialCall( _CONFIG* conf,
                   salesRep->id, newRep->id, y, m, d );
           return -3;
           }
+
+        repLastDay = newRep->endOfWorkDays;
 
         while( thisDay < repLastDay )
           if( thisDay->working==0
@@ -576,7 +561,6 @@ int SimulateInitialCall( _CONFIG* conf,
                newRep->id, product->id, customerID );
 
         salesRep = newRep;
-        repLastDay = newRep->endOfWorkDays;
 
         Event( "%s will try to connect with customer starting on %04d-%02d-%02d",
                newRep->id, thisDay->date.year, thisDay->date.month, thisDay->date.day );
@@ -589,7 +573,23 @@ int SimulateInitialCall( _CONFIG* conf,
         }
       }
 
-    /* possibly delay this event due to a rebooking */
+    /* moved this block here (was above) because it's the new rep who should get the counters incremented. */
+    if( stageNo>0 && thisDay<repLastDay ) /* if stageNo==0, caller to this function did that already */
+      {
+      ++ (thisDay->nCalls);
+      ++ (thisDay->nFollowUpCalls);
+      if( thisDay->month )
+        {
+        ++ (thisDay->month->nCalls);
+        ++ (thisDay->month->nFollowUpCalls);
+        }
+      Event( "%04d-%02d-%02d: incremented calls by %s for %s to %d (pre connection attempts retries)",
+             thisDay->date.year, thisDay->date.month, thisDay->date.day,
+             salesRep->id, product->id, thisDay->nCalls
+             );
+      }
+
+    /* possibly delay moving to the next stage due to a rebooking */
     if( stage->connectAttemptsAverage>0 )
       {
       int nRebookAttempts = (int)(RandN2( stage->connectAttemptsAverage, stage->sdevConnectAttempts ) + 0.5);
@@ -614,6 +614,11 @@ int SimulateInitialCall( _CONFIG* conf,
             ++ (thisDay->month->nCalls); /* update the monthly summary data */
             ++ (thisDay->month->nFollowUpCalls);
             }
+
+          Event( "%04d-%02d-%02d: incremented calls by %s for %s to %d (retry %d)",
+                 thisDay->date.year, thisDay->date.month, thisDay->date.day,
+                 salesRep->id, product->id, thisDay->nCalls, callNum
+                 );
           }
 
         int nDaysToNextCall = (int)(RandN2( stage->connectRetryDaysAverage, stage->sdevConnectRetryDays ) + 0.5);
