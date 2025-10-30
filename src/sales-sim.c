@@ -462,7 +462,7 @@ int SimulateInitialCall( _CONFIG* conf,
   if( product->marketSize>0 /* limited */
       && product->nAvailableOrgs<=0 )
     {
-    Event( "Tried to make a sales call for %s but already sold to everyone (market=%d, left=%d)",
+    Event( "Tried to make a sales call for %s but already called everyone (market=%d, left=%d)",
             product->id, product->marketSize, product->nAvailableOrgs );
     return -1;
     }
