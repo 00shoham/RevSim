@@ -85,7 +85,6 @@ _SINGLE_DAY* FindThisDateNextMonth( _SINGLE_DAY* start, _SINGLE_DAY* tombstone, 
   return possible;
   }
 
-/* QQQ add support for the case where the sales process started out with another rep - like a cold caller */
 void CloseSingleSale( _CONFIG* conf,
                       _SALES_REP* salesRep,
                       _REP_POINTER* repSequence,
@@ -399,6 +398,8 @@ void CloseSingleSale( _CONFIG* conf,
       Event( ".. %04d-%02d-%02d Rep %s gets paid %.1lf for %.1lf in sales to customer %d (month %d of deal)",
              payDay->date.year, payDay->date.month, payDay->date.day,
              salesRep->id, payDay->fees->amount, payDay->dailySales->revenue, customer, monthNo );
+      /* QQQ go through other reps in the stack and pay them too, if they are (a) still
+             around and (b) commissioned. */
       }
     else
       {
@@ -494,7 +495,6 @@ int SimulateInitialCall( _CONFIG* conf,
          thisDay->date.year, thisDay->date.month, thisDay->date.day,
          product->id, salesRep->id, customerID );
 
-  /* QQQ keep track of a stack of sales reps on the deal. */
   _REP_POINTER* repSequence = NULL;
   repSequence = SRPushOnStack( repSequence, salesRep );
   for( int stageNo = 0; stageNo < product->nSalesStages; ++stageNo )
@@ -525,6 +525,8 @@ int SimulateInitialCall( _CONFIG* conf,
           {
           Event( "Paying %s %.1lf for a successful lead", salesRep->id, salesRep->handoffFee );
           thisDay->fees = NewPayEvent( conf, thisDay->date, salesRep, pt_commission, salesRep->handoffFee, thisDay->fees );
+          /* QQQ go through other reps in the stack and pay them too, if they are (a) still
+                 around and (b) commissioned. */
           }
 
         int y = thisDay->date.year;
@@ -837,7 +839,6 @@ void PaySingleRepSalary( _CONFIG* conf, _SALES_REP* s )
     AdjustSalaryLastMonth( conf, s, prevDay, salary, nDaysSinceSalary );
   }
 
-/* QQQ this function is either buggy or the data structure is not properly initialized. */
 enum badDayReasons { bdr_before_start, bdr_after_end, bdr_error };
 _SINGLE_DAY* FindRepDay( _SALES_REP* s, time_t theTime, _MMDD* theDay,
                          enum badDayReasons* reason )

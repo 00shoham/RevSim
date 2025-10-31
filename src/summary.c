@@ -71,13 +71,6 @@ double NetIncomeForYear( int year, _MONTHLY_SUMMARY* array, int nMonths )
       netIncome -= monthPtr->commission;
       netIncome -= monthPtr->salary;
       netIncome -= monthPtr->expense;
-#if 0
-  /* QQQ this will work better once we move the process of
-     totaling up reps into the overall picture every month,
-     rather than at the end of the sim. */
-      Notice( "Net income becomes %.2lf after %04d-%02d",
-              netIncome, monthPtr->monthStart.year, monthPtr->monthStart.month );
-#endif
       }
     else if( monthPtr->monthStart.year > year )
       break;

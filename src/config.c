@@ -1481,7 +1481,6 @@ void ValidateConfig( _CONFIG* config )
   if( config==NULL )
     Error( "Cannot validate a NULL configuration" );
 
-  /* QQQ new location */
   printf( "Initializing monthly summary array for the config as a whole.\n" );
   InitializeMonthlySummaryArray( "Simulation",
                                  &(config->monthlySummary),

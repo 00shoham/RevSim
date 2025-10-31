@@ -132,7 +132,6 @@ int SSCompareFunc( const void* a, const void* b )
     return -1;
   }
 
-/* QQQ this disregards 'follows'  - fix! */
 int SalesStagesArray( _SALES_STAGE* firstStage, _SALES_STAGE*** arrayPtr )
   {
   int nItems = 0;
