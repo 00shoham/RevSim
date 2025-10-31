@@ -624,3 +624,47 @@ _SALES_REP* RandomRepFromClassList( _CONFIG* conf, _CLASS_POINTER* repClasses, t
   Error( "RandomRepFromClassList -> none found" );
   return NULL; /* just to keep the compiler happy */
   }
+
+_REP_POINTER* SRPushOnStack( _REP_POINTER* stack, _SALES_REP* newRep )
+  {
+  if( newRep==NULL )
+    Error( "SRPushOnStack() - null new rep" );
+  _REP_POINTER* newRP = (_REP_POINTER*)SafeCalloc( 1, sizeof( _REP_POINTER ), "New RP" );
+  newRP->next = stack;
+  newRP->rep = newRep;
+  return newRP;
+  }
+
+_SALES_REP* SRPeekFromStack( _REP_POINTER* stack )
+  {
+  if( stack==NULL )
+    return NULL;
+  else
+    return stack->rep;
+  }
+
+_REP_POINTER* SRPopFromStack( _REP_POINTER* stack, _SALES_REP** topOfStack )
+  {
+  if( topOfStack==NULL )
+    Error( "SRPopFromStack() - NULL rep pointer" );
+  if( stack==NULL )
+    {
+    *topOfStack = NULL;
+    return NULL;
+    }
+  *topOfStack = stack->rep;
+  _REP_POINTER* retVal = stack->next;
+  free( stack );
+  return retVal;
+  }
+
+void SRFreeStack( _REP_POINTER* stack )
+  {
+  if( stack==NULL )
+    return;
+  SRFreeStack( stack->next );
+  free( stack );
+  }
+
+
+

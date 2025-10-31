@@ -85,4 +85,15 @@ _CLASS_POINTER* NewClassPointer( _SALES_REP_CLASS* class, _CLASS_POINTER* list )
 void FreeClassPointer( _CLASS_POINTER* list );
 int SalesRepInIndicatedClass( _CLASS_POINTER* cp, _SALES_REP* rep );
 
+typedef struct _repPointer
+  {
+  _SALES_REP* rep;
+  struct _repPointer* next;
+  } _REP_POINTER;
+
+_REP_POINTER* SRPushOnStack( _REP_POINTER* stack, _SALES_REP* newRep );
+_SALES_REP* SRPeekFromStack( _REP_POINTER* stack );
+_REP_POINTER* SRPopFromStack( _REP_POINTER* stack, _SALES_REP** topOfStack );
+void SRFreeStack( _REP_POINTER* stack );
+
 #endif

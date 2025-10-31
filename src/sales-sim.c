@@ -85,6 +85,7 @@ _SINGLE_DAY* FindThisDateNextMonth( _SINGLE_DAY* start, _SINGLE_DAY* tombstone, 
   return possible;
   }
 
+/* QQQ add support for the case where the sales process started out with another rep - like a cold caller */
 void CloseSingleSale( _CONFIG* conf,
                       _SALES_REP* salesRep,
                       _ORG* targetOrg,
@@ -492,6 +493,7 @@ int SimulateInitialCall( _CONFIG* conf,
          thisDay->date.year, thisDay->date.month, thisDay->date.day,
          product->id, salesRep->id, customerID );
 
+  /* QQQ keep track of a stack of sales reps on the deal. */
   for( int stageNo = 0; stageNo < product->nSalesStages; ++stageNo )
     {
     /*
