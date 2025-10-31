@@ -88,6 +88,7 @@ _SINGLE_DAY* FindThisDateNextMonth( _SINGLE_DAY* start, _SINGLE_DAY* tombstone, 
 /* QQQ add support for the case where the sales process started out with another rep - like a cold caller */
 void CloseSingleSale( _CONFIG* conf,
                       _SALES_REP* salesRep,
+                      _REP_POINTER* repSequence,
                       _ORG* targetOrg,
                       _SINGLE_DAY* repFirstDay,
                       _SINGLE_DAY* repLastDay,
@@ -494,6 +495,8 @@ int SimulateInitialCall( _CONFIG* conf,
          product->id, salesRep->id, customerID );
 
   /* QQQ keep track of a stack of sales reps on the deal. */
+  _REP_POINTER* repSequence = NULL;
+  repSequence = SRPushOnStack( repSequence, salesRep );
   for( int stageNo = 0; stageNo < product->nSalesStages; ++stageNo )
     {
     /*
@@ -510,6 +513,7 @@ int SimulateInitialCall( _CONFIG* conf,
       _SALES_REP* newRep = RandomRepFromClassList( conf, stage->repClasses, thisDay->t );
       if( newRep!=NULL )
         {
+        repSequence = SRPushOnStack( repSequence, newRep );
         Event( "%04d-%02d-%02d: moved %s to product %s stage %d:%s, switched rep from %s to %s",
                thisDay->date.year, thisDay->date.month, thisDay->date.day,
                customerID, product->id, stageNo, stage->id, salesRep->id, newRep->id );
@@ -532,6 +536,7 @@ int SimulateInitialCall( _CONFIG* conf,
           {
           Event( "Switched sales process from %s to %s but they have already departed by %04d-%02d-%02d",
                   salesRep->id, newRep->id, y, m, d );
+          SRFreeStack( repSequence );
           return -3;
           }
 
@@ -555,6 +560,7 @@ int SimulateInitialCall( _CONFIG* conf,
                  y, m, d,
                  repLastDay - thisDay
                  );
+          SRFreeStack( repSequence );
           return 0;
           }
 
@@ -571,6 +577,7 @@ int SimulateInitialCall( _CONFIG* conf,
         {
         Warning( "Sales stage %s requires a rep in a different class than %s (%s) - nobody found.",
                  stage->id, salesRep->id, salesRep->class->id );
+        SRFreeStack( repSequence );
         return 0;
         }
       }
@@ -645,6 +652,7 @@ int SimulateInitialCall( _CONFIG* conf,
                salesRep->id,
                repLastRealDay->date.year, repLastRealDay->date.month, repLastRealDay->date.day,
                stage->id );
+        SRFreeStack( repSequence );
         return 0; /* next stage happens after this rep's last day - unlikely to hand off properly */
         }
       }
@@ -662,6 +670,7 @@ int SimulateInitialCall( _CONFIG* conf,
       if( targetOrg!=NULL ) /* org won't be called for a cooling period */
         RejectedByOrg( conf, product, targetOrg, thisDay->t );
 
+      SRFreeStack( repSequence );
       return 0; /* failed - attrition at this stage of the sales process*/
       }
     else
@@ -677,6 +686,7 @@ int SimulateInitialCall( _CONFIG* conf,
 
       CloseSingleSale( conf,
                        salesRep,
+                       repSequence,
                        targetOrg,
                        thisDay,
                        repLastDay,
@@ -684,6 +694,7 @@ int SimulateInitialCall( _CONFIG* conf,
                        0.0,
                        0 );
 
+      SRFreeStack( repSequence );
       return 0;
       }
     else
@@ -726,6 +737,7 @@ int SimulateInitialCall( _CONFIG* conf,
       {
       Event( "Failed to complete sales process with org %s as rep %s quit.",
              customerID, salesRep->id );
+      SRFreeStack( repSequence );
       return 0; /* next stage happens after end of simulation */
       }
 
@@ -734,6 +746,7 @@ int SimulateInitialCall( _CONFIG* conf,
     Event( "Next sales stage by %s will start on %04d-%02d-%02d", salesRep->id, thisDay->date.year, thisDay->date.month, thisDay->date.day );
     }
 
+  SRFreeStack( repSequence );
   return 0;
   }
 

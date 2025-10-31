@@ -160,7 +160,7 @@ int main( int argc, char** argv )
             p->maxOrgNum = targetOrg->number;
           }
 
-        CloseSingleSale( conf, conf->customerCare, targetOrg,
+        CloseSingleSale( conf, conf->customerCare, NULL, targetOrg,
                          startDay, endDay,
                          p, avgRevenuePerCustomer, 0 );
         }
@@ -187,7 +187,7 @@ int main( int argc, char** argv )
           if( targetOrg->number > p->maxOrgNum )
             p->maxOrgNum = targetOrg->number;
           }
-        CloseSingleSale( conf, conf->customerCare, targetOrg,
+        CloseSingleSale( conf, conf->customerCare, NULL, targetOrg,
                          startDay, endDay,
                          p, avgRevenuePerCustomer, unitsPerCustomer );
         }
