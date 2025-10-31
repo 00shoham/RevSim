@@ -398,8 +398,25 @@ void CloseSingleSale( _CONFIG* conf,
       Event( ".. %04d-%02d-%02d Rep %s gets paid %.1lf for %.1lf in sales to customer %d (month %d of deal)",
              payDay->date.year, payDay->date.month, payDay->date.day,
              salesRep->id, payDay->fees->amount, payDay->dailySales->revenue, customer, monthNo );
-      /* QQQ go through other reps in the stack and pay them too, if they are (a) still
-             around and (b) commissioned. */
+
+      for( _REP_POINTER* rp=repSequence; rp!=NULL; rp=rp->next )
+        {
+        if( rp->rep==NULL )
+          continue; /* no rep? */
+        if( rp->rep==salesRep )
+          continue; /* we already paid this rep */
+        if( MMDDToTime( &(rp->rep->lastDay) ) < MMDDToTime( &(payDay->date) ) )
+          continue; /* previous rep is gone already */
+        if( rp->rep->class==NULL )
+          continue; /* previous rep has no class.  lol */
+        if( rp->rep->class->commission<=0 )
+          continue; /* no commission for this earlier rep */
+        /* okay - earlier rep deserves a little something */
+        payDay->fees = NewPayEvent( conf, payDay->date, rp->rep, pt_commission, revenue * rp->rep->class->commission / 100.0, payDay->fees );
+        Event( ".. %04d-%02d-%02d Rep %s gets paid %.1lf for %.1lf in sales to customer %d (month %d of deal)",
+               payDay->date.year, payDay->date.month, payDay->date.day,
+               rp->rep->id, payDay->fees->amount, payDay->dailySales->revenue, customer, monthNo );
+        }
       }
     else
       {
@@ -525,8 +542,6 @@ int SimulateInitialCall( _CONFIG* conf,
           {
           Event( "Paying %s %.1lf for a successful lead", salesRep->id, salesRep->handoffFee );
           thisDay->fees = NewPayEvent( conf, thisDay->date, salesRep, pt_commission, salesRep->handoffFee, thisDay->fees );
-          /* QQQ go through other reps in the stack and pay them too, if they are (a) still
-                 around and (b) commissioned. */
           }
 
         int y = thisDay->date.year;
